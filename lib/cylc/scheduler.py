@@ -17,6 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Cylc scheduler server."""
 
+# http://www.gevent.org/intro.html#monkey-patching
+from gevent import monkey; monkey.patch_all()
+
 from collections import deque
 from logging import DEBUG
 import os
@@ -41,7 +44,7 @@ import cylc.flags
 from cylc.log_diagnosis import LogSpec
 from cylc.mp_pool import SuiteProcPool
 from cylc.network import PRIVILEGE_LEVELS
-from cylc.network.httpserver import HTTPServer
+from cylc.network import httpserver
 from cylc.state_summary_mgr import StateSummaryMgr
 from cylc.task_events_mgr import TaskEventsManager
 from cylc.broadcast_mgr import BroadcastMgr
@@ -173,7 +176,8 @@ class Scheduler(object):
         self.task_job_mgr = None
         self.task_events_mgr = None
         self.suite_event_handler = None
-        self.httpserver = None
+        self.flaskapp = None
+        self.http_server = None
         self.port = None
         self.command_queue = None
         self.message_queue = None
@@ -238,8 +242,9 @@ class Scheduler(object):
             self.suite_log = SuiteLog.get_inst(self.suite)
             self.suite_log.pimp(detach)
             self.proc_pool = SuiteProcPool()
-            self.httpserver = HTTPServer(self.suite)
-            self.port = self.httpserver.port
+            self.flaskapp = httpserver.create_app(self)
+            self.http_server = httpserver.start_app(self.flaskapp)
+            self.port = httpserver.get_port(self.http_server)
             self.configure()
             self.profiler.start()
             self.run()
@@ -343,7 +348,6 @@ conditions; see `cylc conditions`.
         self.profiler.log_memory("scheduler.py: before load_suiterc")
         self.load_suiterc()
         self.profiler.log_memory("scheduler.py: after load_suiterc")
-        self.httpserver.connect(self)
 
         self.suite_db_mgr.on_suite_start(self.is_restart)
         if self.config.cfg['scheduling']['hold after point']:
@@ -374,7 +378,7 @@ conditions; see `cylc conditions`.
             self.configure_reftest()
 
         LOG.info(self.START_MESSAGE_TMPL % {
-            'host': self.host, 'port': self.httpserver.port,
+            'host': self.host, 'port': self.port,
             'pid': os.getpid()})
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
@@ -968,14 +972,14 @@ conditions; see `cylc conditions`.
         # Preserve contact data in memory, for regular health check.
         mgr = self.suite_srv_files_mgr
         contact_data = {
-            mgr.KEY_API: str(self.httpserver.API),
+            mgr.KEY_API: str(self.flaskapp.config['CYLC_API']),
             mgr.KEY_COMMS_PROTOCOL: glbl_cfg().get(
                 ['communication', 'method']),
             mgr.KEY_DIR_ON_SUITE_HOST: os.environ['CYLC_DIR'],
             mgr.KEY_HOST: self.host,
             mgr.KEY_NAME: self.suite,
             mgr.KEY_OWNER: self.owner,
-            mgr.KEY_PORT: str(self.httpserver.port),
+            mgr.KEY_PORT: str(self.port),
             mgr.KEY_PROCESS: process_str,
             mgr.KEY_SSH_USE_LOGIN_SHELL: str(glbl_cfg().get_host_item(
                 'use login shell')),
@@ -1171,7 +1175,7 @@ conditions; see `cylc conditions`.
         try:
             self.suite_event_handler.handle(self.config, SuiteEventContext(
                 event, reason, self.suite, self.owner, self.host,
-                self.httpserver.port))
+                self.port))
         except SuiteEventError as exc:
             if event == self.EVENT_SHUTDOWN and self.options.reftest:
                 LOG.error('SUITE REFERENCE TEST FAILED')
@@ -1592,8 +1596,8 @@ conditions; see `cylc conditions`.
             except Exception as exc:
                 ERR.error(str(exc))
 
-        if self.httpserver:
-            self.httpserver.shutdown()
+        if self.http_server:
+            httpserver.shutdown(self.http_server)
 
         # Flush errors and info before removing suite contact file
         sys.stdout.flush()
