@@ -36,6 +36,8 @@ from uuid import uuid4
 from functools import wraps
 
 import flask
+from flask_graphql import GraphQLView
+from cylc.network.schema import schema
 
 from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.exceptions import CylcError
@@ -131,7 +133,7 @@ def _get_client_info():
 
 
 #** API object creation
-def create_app(sch_obj):
+def create_app(schd_obj):
     """HTTP(S) server by flask-gevent, for serving suite runtime API."""
     app = flask.Flask(__name__)
     
@@ -140,13 +142,13 @@ def create_app(sch_obj):
         DEBUG = False,
         SECRET_KEY = binascii.hexlify(os.urandom(16)),
         JSONIFY_PRETTYPRINT_REGULAR = False,
-        CYLC_SCHEDULER = sch_obj,
+        CYLC_SCHEDULER = schd_obj,
         CYLC_API = 2
         )
 
     users = {
         'cylc': srv_files_mgr.get_auth_item(srv_files_mgr.FILE_BASE_PASSPHRASE,
-            sch_obj.suite, content=True),
+            schd_obj.suite, content=True),
         'anon': NO_PASSPHRASE
          }
 
@@ -227,6 +229,20 @@ def create_app(sch_obj):
     api = api_blueprint(app)
     app.register_blueprint(api)
     app.register_blueprint(api, url_prefix='/id')
+
+    def graphql_view():
+        view = GraphQLView.as_view(
+            'graphql',
+            schema=schema,
+            graphiql=True,
+            get_context=lambda: {'schd_obj': schd_obj}
+        )
+        return auth.login_required(view)
+ 
+    app.add_url_rule(
+        '/graphql',
+        view_func=graphql_view()
+    )
 
     @app.after_request
     def after_request(response):
