@@ -143,7 +143,7 @@ def create_app(schd_obj):
         SECRET_KEY = binascii.hexlify(os.urandom(16)),
         JSONIFY_PRETTYPRINT_REGULAR = False,
         CYLC_SCHEDULER = schd_obj,
-        CYLC_API = 2
+        CYLC_API = 3
         )
 
     users = {
@@ -235,7 +235,11 @@ def create_app(schd_obj):
             'graphql',
             schema=schema,
             graphiql=True,
-            get_context=lambda: {'schd_obj': schd_obj}
+            get_context=lambda: {
+                'schd_obj': schd_obj,
+                'app_server': app,
+                'request': flask.request
+                }
         )
         return auth.login_required(view)
  

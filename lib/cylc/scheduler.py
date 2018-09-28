@@ -775,6 +775,38 @@ conditions; see `cylc conditions`.
         """Return prerequisites of a task."""
         return self.pool.get_task_requisites(items, list_prereqs=list_prereqs)
 
+    def info_graphql_task(self):
+        """Return task fields for GraphQL"""
+        result = []
+        for task in self.pool.get_all_tasks():
+            ts = dict(task.get_state_summary())
+            ts['task_id'] = task.identity
+            jhosts = []
+            for key in ts['job_hosts']:
+                jhosts.append({
+                    'task_id': task.identity,
+                    'submit_num': key,
+                    'job_host': ts['job_hosts'][key]})
+
+            ts['job_hosts'] = jhosts
+            taskmeta = task.tdef.describe()
+            ts['URL'] = taskmeta['URL']
+            outputs = {'task_id': task.identity}
+            for _, msg, is_completed in task.state.outputs.get_all():
+                outputs[msg] = is_completed
+            ts['outputs'] = outputs
+            
+            prereq_list = []
+            for item in task.state.prerequisites_dump():
+                prereq_list.append({
+                    'task_id': task.identity,
+                    'condition': item[0],
+                    'message': item[1]})
+            ts['prerequisites'] = prereq_list
+            result.append(ts)
+
+        return result
+
     def info_ping_task(self, task_id, exists_only=False):
         """Return True if task exists and running."""
         task_id = self.get_standardised_taskid(task_id)
