@@ -29,6 +29,8 @@ from cylc.suite_status import (
 from cylc.task_state import TASK_STATUS_RUNAHEAD
 from cylc.task_state_prop import extract_group_state
 
+from cylc.network.schema import QLPrereq, QLJobHost, QLOutputs, QLTask
+
 
 class StateSummaryMgr(object):
     """Manage suite state summary for client, e.g. GUI."""
@@ -43,6 +45,8 @@ class StateSummaryMgr(object):
         self.state_count_totals = {}
         self.state_count_cycles = {}
 
+        self.taskql_data = {}
+
     def update(self, schd):
         """Update."""
         self.update_time = time()
@@ -50,6 +54,8 @@ class StateSummaryMgr(object):
         family_summary = {}
 
         task_summary, task_states = self._get_tasks_info(schd)
+
+        taskql_data = self._get_taskql_data(schd)
 
         all_states = []
         ancestors_dict = schd.config.get_first_parent_ancestors()
@@ -164,6 +170,7 @@ class StateSummaryMgr(object):
         self.family_summary = family_summary
         self.state_count_totals = state_count_totals
         self.state_count_cycles = state_count_cycles
+        self.taskql_data = taskql_data
 
     @staticmethod
     def _get_tasks_info(schd):
@@ -188,6 +195,63 @@ class StateSummaryMgr(object):
             task_states[point_string][name] = ts['state']
 
         return task_summary, task_states
+
+    @staticmethod
+    def _get_taskql_data(schd):
+        """Retrieve task summary info resource GraphQL"""
+
+        taskql_data = {}
+
+        for task in schd.pool.get_all_tasks():
+            ts = dict(task.get_state_summary())
+            j_hosts = [] 
+            for key in ts['job_hosts']:
+                jhost = QLJobHost(
+                    submit_num = key,
+                    job_host = ts['job_hosts'][key])
+                j_hosts.append(jhost)
+
+            taskmeta = task.tdef.describe()
+            t_outs = QLOutputs()
+            for _, msg, is_completed in task.state.outputs.get_all():
+                if msg == 'submit-failed':
+                    msg = 'submit_failed'
+                setattr(t_outs, msg, is_completed)
+     
+            prereq_list = [] 
+            for item in task.state.prerequisites_dump():
+                t_prereq = QLPrereq(condition = item[0], message = item[1])
+                prereq_list.append(t_prereq)
+
+            taskql_data[task.identity] = QLTask(
+                id = task.identity,
+                name = ts['name'],
+                label = ts['label'],
+                state = ts['state'],
+                title = ts['title'],
+                description = ts['description'],
+                URL = taskmeta['URL'],
+                spawned = ts['spawned'],
+                execution_time_limit = ts['execution_time_limit'],
+                submitted_time = ts['submitted_time'],
+                started_time = ts['started_time'],
+                finished_time = ts['finished_time'],
+                mean_elapsed_time = ts['mean_elapsed_time'],
+                submitted_time_string = ts['submitted_time_string'],
+                started_time_string = ts['started_time_string'],
+                finished_time_string = ts['finished_time_string'],
+                host = task.task_host,
+                batch_sys_name = ts['batch_sys_name'],
+                submit_method_id = ts['submit_method_id'],
+                submit_num = ts['submit_num'],
+                logfiles = ts['logfiles'],
+                latest_message = ts['latest_message'],
+                job_hosts = j_hosts,
+                prerequisites = prereq_list,
+                outputs = t_outs)
+
+        return taskql_data
+
 
     def get_state_summary(self):
         """Return the global, task, and family summary data structures."""
@@ -224,3 +288,7 @@ class StateSummaryMgr(object):
                     (None, len(ret[state]) - 5, None,)]
 
         return ret
+
+    def get_taskql_data(self):
+        """Return the task summary resource the GraphQL endpoint."""
+        return self.taskql_data

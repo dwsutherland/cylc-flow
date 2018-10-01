@@ -19,6 +19,7 @@
 
 
 import graphene
+from graphene import relay
 from graphene.types.resolver import dict_resolver
 
 from cylc.task_outputs import (
@@ -26,28 +27,20 @@ from cylc.task_outputs import (
     TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
 
 
-class Prerequisite(graphene.ObjectType):
-    class Meta:
-        default_resolver = dict_resolver
-
-    task_id = graphene.ID()
+class QLPrereq(graphene.ObjectType):
+    """Task prerequisite."""
     condition = graphene.String()
     message = graphene.String()
-    pass
 
-class JobHost(graphene.ObjectType):
-    class Meta:
-        default_resolver = dict_resolver
 
-    task_id = graphene.ID()
+class QLJobHost(graphene.ObjectType):
+    """Task job host."""
     submit_num = graphene.Int()
     job_host = graphene.String()
 
-class TaskOut(graphene.ObjectType):
-    class Meta:
-        default_resolver = dict_resolver
 
-    task_id = graphene.ID()
+class QLOutputs(graphene.ObjectType):
+    """Task State Outputs"""
     expired = graphene.Boolean()
     submitted = graphene.Boolean()
     submit_failed = graphene.Boolean()
@@ -56,18 +49,17 @@ class TaskOut(graphene.ObjectType):
     failed = graphene.Boolean()
 
 
-class Task(graphene.ObjectType):
+class QLTask(graphene.ObjectType):
+    """Task composite."""
     class Meta:
-        default_resolver = dict_resolver
+        interfaces = (relay.Node,)
 
-    task_id = graphene.ID()
     name = graphene.String()
     label = graphene.String()
     state = graphene.String()
     title = graphene.String()
     description = graphene.String()
     URL = graphene.String()
-    prerequisites = graphene.List(Prerequisite)
     spawned = graphene.Boolean()
     execution_time_limit = graphene.Float()
     submitted_time = graphene.Float()
@@ -78,20 +70,31 @@ class Task(graphene.ObjectType):
     started_time_string = graphene.String()
     finished_time_string = graphene.String()
     host = graphene.String()
-    job_hosts = graphene.List(JobHost)
     batch_sys_name = graphene.String()
     submit_method_id = graphene.String()
     submit_num = graphene.Int()
     logfiles = graphene.List(graphene.String)
     latest_message = graphene.String()
-    outputs = graphene.List(TaskOut)
-    
+    job_hosts = graphene.List(QLJobHost)
+    prerequisites = graphene.List(QLPrereq)
+    outputs = graphene.Field(QLOutputs)
+
+    @classmethod
+    def get_node(cls, info, id):
+        schd = info.context.get('schd_obj')
+        result = schd.info_graphql_tasks(items=[id])
+        return result[0]
+
+class TaskConnection(relay.Connection):
+    class Meta:
+        node = QLTask
 
 
 class Query(graphene.ObjectType):
+    node = relay.Node.Field()
     hello = graphene.String(name=graphene.String(default_value="stranger"))
     apiversion = graphene.Int()
-    tasks = graphene.List(Task)
+    tasks = relay.ConnectionField(TaskConnection)
 
     def resolve_hello(self, info, name):
         print("HELLLLOOOO")
@@ -100,9 +103,9 @@ class Query(graphene.ObjectType):
     def resolve_apiversion(self, info):
         return info.context.get('app_server').config['CYLC_API']
 
-    def resolve_tasks(self, info):
+    def resolve_tasks(self, info, **args):
         schd = info.context.get('schd_obj')
-        return schd.info_graphql_task()
+        return schd.info_graphql_tasks(items=None)
 
 
 schema = graphene.Schema(query=Query)
