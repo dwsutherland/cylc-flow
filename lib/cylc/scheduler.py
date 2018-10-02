@@ -775,15 +775,24 @@ conditions; see `cylc conditions`.
         """Return prerequisites of a task."""
         return self.pool.get_task_requisites(items, list_prereqs=list_prereqs)
 
-    def info_graphql_tasks(self, items=None, args=None):
+    def info_graphql_tasks(self, args={}):
         """Return task fields for GraphQL"""
+        items = []
+        if not 'id' in args:
+            args['id'] = '*.*'
+
+        if 'states' in args and args['states'] and ':' not in args['id']:
+            for state in args['states']:
+                items.append(args['id']+':'+state)
+        else:
+            items.append(args['id'])
+
         itasks, bad_items = self.pool.filter_task_proxies(items)
         result = []
         tdic = self.state_summary_mgr.get_taskql_data()
         for tid in [itask.identity for itask in itasks]:
-        #    if items is None or (
-        #        tdic['task_id'] in [itask.identity for itask in itasks]):
-             result.append(tdic[tid])
+            if tid in tdic:
+                result.append(tdic[tid])
         return result
 
 

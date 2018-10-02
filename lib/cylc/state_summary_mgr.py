@@ -203,7 +203,7 @@ class StateSummaryMgr(object):
         taskql_data = {}
 
         for task in schd.pool.get_all_tasks():
-            ts = dict(task.get_state_summary())
+            ts = task.get_state_summary()
             j_hosts = [] 
             for key in ts['job_hosts']:
                 jhost = QLJobHost(

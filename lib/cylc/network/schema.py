@@ -82,7 +82,8 @@ class QLTask(graphene.ObjectType):
     @classmethod
     def get_node(cls, info, id):
         schd = info.context.get('schd_obj')
-        result = schd.info_graphql_tasks(items=[id])
+        args={'id': id}
+        result = schd.info_graphql_tasks(args)
         return result[0]
 
 class TaskConnection(relay.Connection):
@@ -94,10 +95,13 @@ class Query(graphene.ObjectType):
     node = relay.Node.Field()
     hello = graphene.String(name=graphene.String(default_value="stranger"))
     apiversion = graphene.Int()
-    tasks = relay.ConnectionField(TaskConnection)
+    tasks = relay.ConnectionField(
+        TaskConnection,
+        id=graphene.ID(default_value=None),
+        states=graphene.List(graphene.String, default_value=[]),
+    )
 
     def resolve_hello(self, info, name):
-        print("HELLLLOOOO")
         return 'Hello ' + name
 
     def resolve_apiversion(self, info):
@@ -105,7 +109,7 @@ class Query(graphene.ObjectType):
 
     def resolve_tasks(self, info, **args):
         schd = info.context.get('schd_obj')
-        return schd.info_graphql_tasks(items=None)
+        return schd.info_graphql_tasks(args)
 
 
 schema = graphene.Schema(query=Query)
