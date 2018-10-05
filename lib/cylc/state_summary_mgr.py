@@ -29,7 +29,7 @@ from cylc.suite_status import (
 from cylc.task_state import TASK_STATUS_RUNAHEAD
 from cylc.task_state_prop import extract_group_state
 
-from cylc.network.schema import QLPrereq, QLJobHost, QLOutputs, QLTask
+from cylc.network.schema import QLPrereq, QLJobHost, QLOutputs, QLTask, QLFamily
 
 
 class StateSummaryMgr(object):
@@ -46,19 +46,20 @@ class StateSummaryMgr(object):
         self.state_count_cycles = {}
 
         self.taskql_data = {}
+        self.familyql_data = {}
 
     def update(self, schd):
         """Update."""
         self.update_time = time()
         global_summary = {}
         family_summary = {}
+        familyql_data = {}
 
-        task_summary, task_states = self._get_tasks_info(schd)
-
-        taskql_data = self._get_taskql_data(schd)
+        task_summary, task_states, taskql_data = self._get_tasks_info(schd)
 
         all_states = []
         ancestors_dict = schd.config.get_first_parent_ancestors()
+        descendants_dict = schd.config.get_first_parent_descendants()
 
         # Compute state_counts (total, and per cycle).
         state_count_totals = {}
@@ -101,11 +102,33 @@ class StateSummaryMgr(object):
                     famcfg = {}
                 description = famcfg.get('description')
                 title = famcfg.get('title')
+                url = famcfg.get('URL')
                 family_summary[f_id] = {'name': fam,
                                         'description': description,
                                         'title': title,
                                         'label': point_string,
                                         'state': state}
+                #familyql specific
+                taskdescs = []
+                famdescs = []
+                for desc_name in descendants_dict[fam]:
+                    if desc_name in c_fam_task_states:
+                        famdescs.append(TaskID.get(desc_name, point_string))
+                    else:
+                        taskdescs.append(TaskID.get(desc_name, point_string))
+                
+                familyql_data[f_id] = QLFamily(
+                    id = f_id,
+                    name = fam,
+                    label = point_string,
+                    state = state,
+                    title = title,
+                    description = description,
+                    URL = url,
+                    tasks = taskdescs,
+                    families = famdescs
+                )
+
 
         state_count_totals = {}
         for point_string, count in state_count_cycles.items():
@@ -171,6 +194,7 @@ class StateSummaryMgr(object):
         self.state_count_totals = state_count_totals
         self.state_count_cycles = state_count_cycles
         self.taskql_data = taskql_data
+        self.familyql_data = familyql_data
 
     @staticmethod
     def _get_tasks_info(schd):
@@ -178,6 +202,7 @@ class StateSummaryMgr(object):
 
         task_summary = {}
         task_states = {}
+        taskql_data = {}
 
         for task in schd.pool.get_tasks():
             ts = task.get_state_summary()
@@ -185,25 +210,7 @@ class StateSummaryMgr(object):
             name, point_string = TaskID.split(task.identity)
             task_states.setdefault(point_string, {})
             task_states[point_string][name] = ts['state']
-
-        for task in schd.pool.get_rh_tasks():
-            ts = task.get_state_summary()
-            ts['state'] = TASK_STATUS_RUNAHEAD
-            task_summary[task.identity] = ts
-            name, point_string = TaskID.split(task.identity)
-            task_states.setdefault(point_string, {})
-            task_states[point_string][name] = ts['state']
-
-        return task_summary, task_states
-
-    @staticmethod
-    def _get_taskql_data(schd):
-        """Retrieve task summary info resource GraphQL"""
-
-        taskql_data = {}
-
-        for task in schd.pool.get_all_tasks():
-            ts = task.get_state_summary()
+            #taskql specific:
             j_hosts = [] 
             for key in ts['job_hosts']:
                 jhost = QLJobHost(
@@ -250,7 +257,62 @@ class StateSummaryMgr(object):
                 prerequisites = prereq_list,
                 outputs = t_outs)
 
-        return taskql_data
+
+        for task in schd.pool.get_rh_tasks():
+            ts = task.get_state_summary()
+            ts['state'] = TASK_STATUS_RUNAHEAD
+            task_summary[task.identity] = ts
+            name, point_string = TaskID.split(task.identity)
+            task_states.setdefault(point_string, {})
+            task_states[point_string][name] = ts['state']
+            #taskql specific:
+            j_hosts = [] 
+            for key in ts['job_hosts']:
+                jhost = QLJobHost(
+                    submit_num = key,
+                    job_host = ts['job_hosts'][key])
+                j_hosts.append(jhost)
+
+            taskmeta = task.tdef.describe()
+            t_outs = QLOutputs()
+            for _, msg, is_completed in task.state.outputs.get_all():
+                if msg == 'submit-failed':
+                    msg = 'submit_failed'
+                setattr(t_outs, msg, is_completed)
+     
+            prereq_list = [] 
+            for item in task.state.prerequisites_dump():
+                t_prereq = QLPrereq(condition = item[0], message = item[1])
+                prereq_list.append(t_prereq)
+
+            taskql_data[task.identity] = QLTask(
+                id = task.identity,
+                name = ts['name'],
+                label = ts['label'],
+                state = ts['state'],
+                title = ts['title'],
+                description = ts['description'],
+                URL = taskmeta['URL'],
+                spawned = ts['spawned'],
+                execution_time_limit = ts['execution_time_limit'],
+                submitted_time = ts['submitted_time'],
+                started_time = ts['started_time'],
+                finished_time = ts['finished_time'],
+                mean_elapsed_time = ts['mean_elapsed_time'],
+                submitted_time_string = ts['submitted_time_string'],
+                started_time_string = ts['started_time_string'],
+                finished_time_string = ts['finished_time_string'],
+                host = task.task_host,
+                batch_sys_name = ts['batch_sys_name'],
+                submit_method_id = ts['submit_method_id'],
+                submit_num = ts['submit_num'],
+                logfiles = ts['logfiles'],
+                latest_message = ts['latest_message'],
+                job_hosts = j_hosts,
+                prerequisites = prereq_list,
+                outputs = t_outs)
+
+        return task_summary, task_states, taskql_data
 
 
     def get_state_summary(self):
@@ -292,3 +354,7 @@ class StateSummaryMgr(object):
     def get_taskql_data(self):
         """Return the task summary resource the GraphQL endpoint."""
         return self.taskql_data
+
+    def get_familyql_data(self):
+        """Return the family summary resource the GraphQL endpoint."""
+        return self.familyql_data

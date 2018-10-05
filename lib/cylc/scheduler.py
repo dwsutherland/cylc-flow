@@ -29,6 +29,7 @@ from subprocess import Popen, PIPE
 import sys
 from time import sleep, time
 import traceback
+from fnmatch import fnmatchcase
 
 import isodatetime.data
 import isodatetime.parsers
@@ -778,22 +779,85 @@ conditions; see `cylc conditions`.
     def info_graphql_tasks(self, args={}):
         """Return task fields for GraphQL"""
         items = []
-        if not 'id' in args:
-            args['id'] = '*.*'
-
-        if 'states' in args and args['states'] and ':' not in args['id']:
-            for state in args['states']:
-                items.append(args['id']+':'+state)
-        else:
+        exitems = []
+        if 'items' in args:
+            items += list(args['items'])
+        if 'id' in args:
             items.append(args['id'])
+        elif not items:
+            items.append('*.*')
+        if 'states' in args and args['states']:
+            for status in args['states']:
+                for i, item in enumerate(items):
+                    if ':' not in item:
+                        items[i] = item + ':' + status
+        if 'exitems' in args:
+            exitems += list(args['exitems'])
+        if 'exid' in args:
+            exitems.append(args['exid'])
+        ts_xcon = bool(not('exstates' in args and args['exstates']))
 
-        itasks, bad_items = self.pool.filter_task_proxies(items)
         result = []
         tdic = self.state_summary_mgr.get_taskql_data()
-        for tid in [itask.identity for itask in itasks]:
-            if tid in tdic:
-                result.append(tdic[tid])
+        itasks, bad_items = self.pool.filter_task_proxies(items)
+        for t_id in {itask.identity for itask in itasks}:
+            if t_id in tdic and (not any(fnmatchcase(str(t_id),
+                        exitem.replace('/', TaskID.DELIM))
+                        for exitem in exitems) and
+                    (ts_xcon or tdic[t_id].state not in args['exstates'])):
+                result.append(tdic[t_id])
         return result
+
+
+    def info_graphql_task_by_id(self, id=None):
+        """Return GrapphQL task object for given id."""
+        tdic = self.state_summary_mgr.get_taskql_data()
+        if id and id in tdic:
+           return tdic[id]
+        return None
+        
+
+    def info_graphql_families(self, args={}):
+        """Return family fields for GraphQL"""
+        result = []
+        if 'items' in args:
+            items = list(args['items'])
+        else:
+            items = []
+        if 'id' in args:
+            items.append(args['id'])
+        elif not items:
+            items.append('*.*')
+
+        if 'exitems' in args:
+            exitems = list(args['exitems'])
+        else:
+            exitems = []
+        if 'exid' in args:
+            exitems.append(args['exid'])
+
+        fs_con = bool(not('states' in args and args['states']))
+        fs_xcon = bool(not('exstates' in args and args['exstates']))
+        fdic = self.state_summary_mgr.get_familyql_data()
+        for f_id in fdic:
+            if (any(fnmatchcase(str(f_id),
+                        item.replace('/', TaskID.DELIM))
+                        for item in items) and not
+                    any(fnmatchcase(str(f_id),
+                        exitem.replace('/', TaskID.DELIM))
+                        for exitem in exitems) and
+                    (fs_con or fdic[f_id].state in args['states']) and
+                    (fs_xcon or fdic[f_id].state not in args['exstates'])):
+                result.append(fdic[f_id])
+        return result
+
+
+    def info_graphql_family_by_id(self, id=None):
+        """Return GraphQL family object for given id."""
+        fdic = self.state_summary_mgr.get_familyql_data()
+        if id and id in fdic:
+           return fdic[id]
+        return None
 
 
     def info_ping_task(self, task_id, exists_only=False):

@@ -245,7 +245,8 @@ def create_app(schd_obj):
  
     app.add_url_rule(
         '/graphql',
-        view_func=graphql_view()
+        view_func=graphql_view(),
+        methods = ['GET', 'POST']
     )
 
     @app.after_request
