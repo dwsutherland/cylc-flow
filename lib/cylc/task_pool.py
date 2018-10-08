@@ -1346,8 +1346,8 @@ class TaskPool(object):
                     bad_items.append(item)
         return itasks, bad_items
 
-    @classmethod
-    def _parse_task_item(cls, item):
+    @staticmethod
+    def _parse_task_item(item):
         """Parse point/name:state or name.point:state syntax."""
         if ":" in item:
             head, state_str = item.rsplit(":", 1)

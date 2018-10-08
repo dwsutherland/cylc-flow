@@ -73,6 +73,7 @@ class QLTask(graphene.ObjectType):
     batch_sys_name = graphene.String()
     submit_method_id = graphene.String()
     submit_num = graphene.Int()
+    namespace = graphene.List(graphene.String)
     logfiles = graphene.List(graphene.String)
     latest_message = graphene.String()
     job_hosts = graphene.List(QLJobHost)
@@ -82,12 +83,11 @@ class QLTask(graphene.ObjectType):
     @classmethod
     def get_node(cls, info, id):
         schd = info.context.get('schd_obj')
-        return schd.info_graphql_task_by_id(id)
+        return schd.info_get_graphql_task(id)
 
 class TaskConnection(relay.Connection):
     class Meta:
         node = QLTask
-
 
 
 class QLFamily(graphene.ObjectType):
@@ -109,23 +109,21 @@ class QLFamily(graphene.ObjectType):
     
     def resolve_tasks(self, info, **args):
         schd = info.context.get('schd_obj')
-        return [schd.info_graphql_task_by_id(id) for id in self.tasks]
+        return [schd.info_get_graphql_task(id) for id in self.tasks]
 
     def resolve_families(self, info, **args):
         schd = info.context.get('schd_obj')
-        return [schd.info_graphql_family_by_id(id) for id in self.families]
+        return [schd.info_get_graphql_family(id) for id in self.families]
 
     @classmethod
     def get_node(cls, info, id):
         schd = info.context.get('schd_obj')
-        return schd.info_graphql_family_by_id(id)
-
+        return schd.info_get_graphql_family(id)
 
 
 class FamilyConnection(relay.Connection):
     class Meta:
         node = QLFamily
-
 
 
 
@@ -136,20 +134,20 @@ class Query(graphene.ObjectType):
     allTasks = relay.ConnectionField(
         TaskConnection,
         id=graphene.ID(default_value=None),
-        items=graphene.List(graphene.ID, default_value=[]),
-        states=graphene.List(graphene.String, default_value=[]),
         exid=graphene.ID(default_value=None),
+        items=graphene.List(graphene.ID, default_value=[]),
         exitems=graphene.List(graphene.ID, default_value=[]),
+        states=graphene.List(graphene.String, default_value=[]),
         exstates=graphene.List(graphene.String, default_value=[]),
     )
 
     allFamilies = relay.ConnectionField(
         FamilyConnection,
         id=graphene.ID(default_value=None),
-        items=graphene.List(graphene.ID, default_value=[]),
-        states=graphene.List(graphene.String, default_value=[]),
         exid=graphene.ID(default_value=None),
+        items=graphene.List(graphene.ID, default_value=[]),
         exitems=graphene.List(graphene.ID, default_value=[]),
+        states=graphene.List(graphene.String, default_value=[]),
         exstates=graphene.List(graphene.String, default_value=[]),
     )
 
@@ -162,11 +160,11 @@ class Query(graphene.ObjectType):
 
     def resolve_allTasks(self, info, **args):
         schd = info.context.get('schd_obj')
-        return schd.info_graphql_tasks(args)
+        return schd.info_get_graphql_nodes(args, node_type='task')
 
     def resolve_allFamilies(self, info, **args):
         schd = info.context.get('schd_obj')
-        return schd.info_graphql_families(args)
+        return schd.info_get_graphql_nodes(args, node_type='family')
 
 schema = graphene.Schema(query=Query)
 

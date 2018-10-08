@@ -776,89 +776,81 @@ conditions; see `cylc conditions`.
         """Return prerequisites of a task."""
         return self.pool.get_task_requisites(items, list_prereqs=list_prereqs)
 
-    def info_graphql_tasks(self, args={}):
-        """Return task fields for GraphQL"""
+    def _graphql_id_parse(self, item):
+        """Return id tuple for search item"""
+        # Head of TaskPool filter_task_proxies
+        point_str, name_str, status = self.pool._parse_task_item(item)
+        if point_str is None:
+            point_str = "*"
+        else:
+            try:
+                point_str = standardise_point_string(point_str)
+            except ValueError:
+                # n_point may be a glob
+                pass
+        return (point_str, name_str, status)
+
+    @staticmethod
+    def _graphql_node_filter(nodes_dic, node_id, items, node_type='task'):
+        """Return true if GraphQL node matches any filter items"""
+        for n_point, n_name, n_state in items:
+            if (fnmatchcase(nodes_dic[node_id].label, n_point) and
+                    (not n_state or nodes_dic[node_id].state == n_state) and
+                    (fnmatchcase(nodes_dic[node_id].name, n_name) or
+                        (node_type == 'task' and 
+                            any(fnmatchcase(ns, n_name)
+                            for ns in nodes_dic[node_id].namespace)))):
+                return True
+        return False
+
+    def info_get_graphql_nodes(self, args={}, node_type='task'):
+        """Return list of GraphQL node objects"""
+        # We could split this into task and family specific functions,
+        # this would be needed if the filtering diverges
+        # graphql validates argument types so no need to check
         items = []
-        exitems = []
         if 'items' in args:
-            items += list(args['items'])
+            items += [self._graphql_id_parse(id) for id in args['items']]
         if 'id' in args:
-            items.append(args['id'])
-        elif not items:
-            items.append('*.*')
-        if 'states' in args and args['states']:
-            for status in args['states']:
-                for i, item in enumerate(items):
-                    if ':' not in item:
-                        items[i] = item + ':' + status
+            items.append(self._graphql_id_parse(args['id']))
+        exitems = []
         if 'exitems' in args:
-            exitems += list(args['exitems'])
+            exitems += [self._graphql_id_parse(id) for id in args['exitems']]
         if 'exid' in args:
-            exitems.append(args['exid'])
-        ts_xcon = bool(not('exstates' in args and args['exstates']))
+            exitems.append(self._graphql_id_parse(args['exid']))
+
+        if node_type == 'task':
+            n_dic = self.state_summary_mgr.get_taskql_data()
+        elif node_type == 'family':
+            n_dic = self.state_summary_mgr.get_familyql_data()
 
         result = []
-        tdic = self.state_summary_mgr.get_taskql_data()
-        itasks, bad_items = self.pool.filter_task_proxies(items)
-        for t_id in {itask.identity for itask in itasks}:
-            if t_id in tdic and (not any(fnmatchcase(str(t_id),
-                        exitem.replace('/', TaskID.DELIM))
-                        for exitem in exitems) and
-                    (ts_xcon or tdic[t_id].state not in args['exstates'])):
-                result.append(tdic[t_id])
+        for n_id in n_dic:
+            if ((not ('states' in args and args['states']) or
+                        n_dic[n_id].state in args['states']) and
+                    (not items or 
+                        self._graphql_node_filter(
+                            n_dic, n_id, items, node_type)) and
+                    (not ('exstates' in args and args['exstates']) or
+                        n_dic[n_id].state not in args['exstates']) and
+                    (not exitems or not self._graphql_node_filter(
+                        n_dic, n_id, exitems, node_type))):
+                result.append(n_dic[n_id])
         return result
 
-
-    def info_graphql_task_by_id(self, id=None):
+    def info_get_graphql_task(self, id=None):
         """Return GrapphQL task object for given id."""
         tdic = self.state_summary_mgr.get_taskql_data()
         if id and id in tdic:
            return tdic[id]
         return None
         
-
-    def info_graphql_families(self, args={}):
-        """Return family fields for GraphQL"""
-        result = []
-        if 'items' in args:
-            items = list(args['items'])
-        else:
-            items = []
-        if 'id' in args:
-            items.append(args['id'])
-        elif not items:
-            items.append('*.*')
-
-        if 'exitems' in args:
-            exitems = list(args['exitems'])
-        else:
-            exitems = []
-        if 'exid' in args:
-            exitems.append(args['exid'])
-
-        fs_con = bool(not('states' in args and args['states']))
-        fs_xcon = bool(not('exstates' in args and args['exstates']))
-        fdic = self.state_summary_mgr.get_familyql_data()
-        for f_id in fdic:
-            if (any(fnmatchcase(str(f_id),
-                        item.replace('/', TaskID.DELIM))
-                        for item in items) and not
-                    any(fnmatchcase(str(f_id),
-                        exitem.replace('/', TaskID.DELIM))
-                        for exitem in exitems) and
-                    (fs_con or fdic[f_id].state in args['states']) and
-                    (fs_xcon or fdic[f_id].state not in args['exstates'])):
-                result.append(fdic[f_id])
-        return result
-
-
-    def info_graphql_family_by_id(self, id=None):
+    def info_get_graphql_family(self, id=None):
         """Return GraphQL family object for given id."""
         fdic = self.state_summary_mgr.get_familyql_data()
         if id and id in fdic:
            return fdic[id]
         return None
-
 
     def info_ping_task(self, task_id, exists_only=False):
         """Return True if task exists and running."""
