@@ -60,6 +60,7 @@ class StateSummaryMgr(object):
         all_states = []
         ancestors_dict = schd.config.get_first_parent_ancestors()
         descendants_dict = schd.config.get_first_parent_descendants()
+        parents_dict = schd.config.get_parent_lists()
 
         # Compute state_counts (total, and per cycle).
         state_count_totals = {}
@@ -109,14 +110,19 @@ class StateSummaryMgr(object):
                                         'label': point_string,
                                         'state': state}
                 #familyql specific
+                famparents = [TaskID.get(
+                    pname, point_string) for pname in parents_dict[fam]]
                 taskdescs = []
                 famdescs = []
                 for desc_name in descendants_dict[fam]:
-                    if desc_name in c_fam_task_states:
-                        famdescs.append(TaskID.get(desc_name, point_string))
-                    else:
-                        taskdescs.append(TaskID.get(desc_name, point_string))
-                
+                    if parents_dict[desc_name][0] == fam:
+                        if desc_name in c_fam_task_states:
+                            famdescs.append(
+                                TaskID.get(desc_name, point_string))
+                        else:
+                            taskdescs.append(
+                                TaskID.get(desc_name, point_string))
+
                 familyql_data[f_id] = QLFamily(
                     id = f_id,
                     name = fam,
@@ -125,6 +131,7 @@ class StateSummaryMgr(object):
                     title = title,
                     description = description,
                     URL = url,
+                    parents = famparents,
                     tasks = taskdescs,
                     families = famdescs
                 )
@@ -203,6 +210,7 @@ class StateSummaryMgr(object):
         task_summary = {}
         task_states = {}
         taskql_data = {}
+        parents_dict = schd.config.get_parent_lists()
 
         for task in schd.pool.get_tasks():
             ts = task.get_state_summary()
@@ -211,6 +219,8 @@ class StateSummaryMgr(object):
             task_states.setdefault(point_string, {})
             task_states[point_string][name] = ts['state']
             #taskql specific:
+            task_parents = [TaskID.get(
+                pname, point_string) for pname in parents_dict[name]]
             j_hosts = [] 
             for key in ts['job_hosts']:
                 jhost = QLJobHost(
@@ -232,12 +242,13 @@ class StateSummaryMgr(object):
 
             taskql_data[task.identity] = QLTask(
                 id = task.identity,
-                name = ts['name'],
-                label = ts['label'],
+                name = name,
+                label = point_string,
                 state = ts['state'],
                 title = ts['title'],
                 description = ts['description'],
                 URL = taskmeta['URL'],
+                parents = task_parents,
                 spawned = ts['spawned'],
                 execution_time_limit = ts['execution_time_limit'],
                 submitted_time = ts['submitted_time'],
@@ -267,6 +278,8 @@ class StateSummaryMgr(object):
             task_states.setdefault(point_string, {})
             task_states[point_string][name] = ts['state']
             #taskql specific:
+            task_parents = [TaskID.get(
+                pname, point_string) for pname in parents_dict[name]]
             j_hosts = [] 
             for key in ts['job_hosts']:
                 jhost = QLJobHost(
@@ -288,12 +301,13 @@ class StateSummaryMgr(object):
 
             taskql_data[task.identity] = QLTask(
                 id = task.identity,
-                name = ts['name'],
-                label = ts['label'],
+                name = name,
+                label = point_string,
                 state = ts['state'],
                 title = ts['title'],
                 description = ts['description'],
                 URL = taskmeta['URL'],
+                parents = task_parents,
                 spawned = ts['spawned'],
                 execution_time_limit = ts['execution_time_limit'],
                 submitted_time = ts['submitted_time'],
