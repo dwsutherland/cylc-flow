@@ -27,17 +27,64 @@ from cylc.task_outputs import (
     TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
 
 
+class QLTimeZone(graphene.ObjectType):
+    """Time zone info."""
+    class Meta:
+        default_resolver = dict_resolver
+    hours = graphene.Int()
+    string_basic = graphene.String()
+    string_extended = graphene.String()
+    minutes = graphene.Int()
+
+class QLStateTotals(graphene.ObjectType):
+    """State Totals."""
+    class Meta:
+        default_resolver = dict_resolver
+    runahead = graphene.Int()
+    waiting = graphene.Int()
+    held = graphene.Int()
+    queued = graphene.Int()
+    expired = graphene.Int()
+    ready = graphene.Int()
+    submit_failed = graphene.Int()
+    submit_retrying = graphene.Int()
+    submitted = graphene.Int()
+    retrying = graphene.Int()
+    running = graphene.Int()
+    failed = graphene.Int()
+    succeeded = graphene.Int()
+
+
+
+class QLGlobal(graphene.ObjectType):
+    """Global suite info."""
+    class Meta:
+        default_resolver = dict_resolver
+    title = graphene.String()
+    description = graphene.String()
+    url = graphene.String()
+    group = graphene.String()
+    reloading = graphene.Boolean()
+    time_zone_info = graphene.Field(QLTimeZone)
+    last_updated = graphene.Float()
+    status = graphene.String()
+    state_totals = graphene.Field(QLStateTotals)
+    states = graphene.List(graphene.String)
+    run_mode = graphene.String()
+    namespace_definition_order = graphene.List(graphene.String)
+    newest_runahead_cycle_point = graphene.String()
+    newest_cycle_point = graphene.String()
+    oldest_cycle_point = graphene.String()
+
 class QLPrereq(graphene.ObjectType):
     """Task prerequisite."""
     condition = graphene.String()
     message = graphene.String()
 
-
 class QLJobHost(graphene.ObjectType):
     """Task job host."""
     submit_num = graphene.Int()
     job_host = graphene.String()
-
 
 class QLOutputs(graphene.ObjectType):
     """Task State Outputs"""
@@ -60,14 +107,6 @@ class QLTask(graphene.ObjectType):
     title = graphene.String()
     description = graphene.String()
     URL = graphene.String()
-    parents = relay.ConnectionField(
-        lambda: FamilyConnection,
-        description="""Task parents.""",
-        exid=graphene.ID(default_value=None),
-        exitems=graphene.List(graphene.ID, default_value=[]),
-        states=graphene.List(graphene.String, default_value=[]),
-        exstates=graphene.List(graphene.String, default_value=[]),
-        )
     spawned = graphene.Boolean()
     execution_time_limit = graphene.Float()
     submitted_time = graphene.Float()
@@ -87,6 +126,14 @@ class QLTask(graphene.ObjectType):
     job_hosts = graphene.List(QLJobHost)
     prerequisites = graphene.List(QLPrereq)
     outputs = graphene.Field(QLOutputs)
+    parents = relay.ConnectionField(
+        lambda: FamilyConnection,
+        description="""Task parents.""",
+        exid=graphene.ID(default_value=None),
+        exitems=graphene.List(graphene.ID, default_value=[]),
+        states=graphene.List(graphene.String, default_value=[]),
+        exstates=graphene.List(graphene.String, default_value=[]),
+        )
 
     def resolve_parents(self, info, **args):
         if self.parents:
@@ -176,6 +223,7 @@ class FamilyConnection(relay.Connection):
 class Query(graphene.ObjectType):
     node = relay.Node.Field()
     apiversion = graphene.Int()
+    globalInfo = graphene.Field(QLGlobal)
     allTasks = relay.ConnectionField(
         TaskConnection,
         id=graphene.ID(default_value=None),
@@ -198,6 +246,10 @@ class Query(graphene.ObjectType):
 
     def resolve_apiversion(self, info):
         return info.context.get('app_server').config['CYLC_API']
+
+    def resolve_globalInfo(self, info):
+        schd = info.context.get('schd_obj')
+        return schd.info_get_graphql_global()
 
     def resolve_allTasks(self, info, **args):
         schd = info.context.get('schd_obj')

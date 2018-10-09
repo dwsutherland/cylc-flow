@@ -47,6 +47,7 @@ class StateSummaryMgr(object):
 
         self.taskql_data = {}
         self.familyql_data = {}
+        self.globalql_data = {}
 
     def update(self, schd):
         """Update."""
@@ -54,6 +55,7 @@ class StateSummaryMgr(object):
         global_summary = {}
         family_summary = {}
         familyql_data = {}
+        globalql_data = {}
 
         task_summary, task_states, taskql_data = self._get_tasks_info(schd)
 
@@ -137,6 +139,11 @@ class StateSummaryMgr(object):
                 )
 
 
+        globalql_data['title'] = schd.config.cfg['meta']['title']
+        globalql_data['description'] = schd.config.cfg['meta']['description']
+        globalql_data['group'] = schd.config.cfg['meta']['group']
+        globalql_data['url'] = schd.config.cfg['meta']['URL']
+
         state_count_totals = {}
         for point_string, count in state_count_cycles.items():
             for state, state_count in count.items():
@@ -145,19 +152,27 @@ class StateSummaryMgr(object):
 
         all_states.sort()
 
-        for key, value in (
-                ('oldest cycle point string', schd.pool.get_min_point()),
-                ('newest cycle point string', schd.pool.get_max_point()),
+        for key1, key2, value in (
+                ('oldest cycle point string', 'oldest_cycle_point',
+                    schd.pool.get_min_point()),
+                ('newest cycle point string', 'newest_cycle_point',
+                    schd.pool.get_max_point()),
                 ('newest runahead cycle point string',
-                 schd.pool.get_max_point_runahead())):
+                    'newest_runahead_cycle_point',
+                    schd.pool.get_max_point_runahead())):
             if value:
-                global_summary[key] = str(value)
+                global_summary[key1] = str(value)
+                globalql_data[key2] = str(value)
             else:
-                global_summary[key] = None
+                global_summary[key1] = None
+                globalql_data[key2] = None
+
         if cylc.flags.utc:
             global_summary['time zone info'] = TIME_ZONE_UTC_INFO
+            globalql_data['time_zone_info'] = TIME_ZONE_UTC_INFO
         else:
             global_summary['time zone info'] = TIME_ZONE_LOCAL_INFO
+            globalql_data['time_zone_info'] = TIME_ZONE_LOCAL_INFO
         global_summary['last_updated'] = self.update_time
         global_summary['run_mode'] = schd.run_mode
         global_summary['states'] = all_states
@@ -165,6 +180,15 @@ class StateSummaryMgr(object):
             schd.config.ns_defn_order)
         global_summary['reloading'] = schd.pool.do_reload
         global_summary['state totals'] = state_count_totals
+
+        globalql_data['last_updated'] = self.update_time
+        globalql_data['run_mode'] = schd.run_mode
+        globalql_data['states'] = all_states
+        globalql_data['namespace_definition_order'] = (
+            schd.config.ns_defn_order)
+        globalql_data['reloading'] = schd.pool.do_reload
+        globalql_data['state_totals'] = state_count_totals
+
         # Extract suite and task URLs from config.
         global_summary['suite_urls'] = dict(
             (i, j['meta']['URL'])
@@ -173,26 +197,26 @@ class StateSummaryMgr(object):
 
         # Construct a suite status string for use by monitoring clients.
         if schd.pool.is_held:
-            global_summary['status_string'] = SUITE_STATUS_HELD
+            status_string = SUITE_STATUS_HELD
         elif schd.stop_mode is not None:
-            global_summary['status_string'] = SUITE_STATUS_STOPPING
+            status_string = SUITE_STATUS_STOPPING
         elif schd.pool.hold_point:
-            global_summary['status_string'] = (
+            status_string = (
                 SUITE_STATUS_RUNNING_TO_HOLD % schd.pool.hold_point)
         elif schd.stop_point:
-            global_summary['status_string'] = (
-                SUITE_STATUS_RUNNING_TO_STOP % schd.stop_point)
+            status_string = (SUITE_STATUS_RUNNING_TO_STOP % schd.stop_point)
         elif schd.stop_clock_time is not None:
-            global_summary['status_string'] = (
+            status_string = (
                 SUITE_STATUS_RUNNING_TO_STOP % schd.stop_clock_time_string)
         elif schd.stop_task:
-            global_summary['status_string'] = (
-                SUITE_STATUS_RUNNING_TO_STOP % schd.stop_task)
+            status_string = (SUITE_STATUS_RUNNING_TO_STOP % schd.stop_task)
         elif schd.final_point:
-            global_summary['status_string'] = (
-                SUITE_STATUS_RUNNING_TO_STOP % schd.final_point)
+            status_string = (SUITE_STATUS_RUNNING_TO_STOP % schd.final_point)
         else:
-            global_summary['status_string'] = SUITE_STATUS_RUNNING
+            status_string = SUITE_STATUS_RUNNING
+        
+        global_summary['status_string'] = status_string
+        globalql_data['status'] = status_string
 
         # Replace the originals (atomic update, for access from other threads).
         self.task_summary = task_summary
@@ -202,6 +226,7 @@ class StateSummaryMgr(object):
         self.state_count_cycles = state_count_cycles
         self.taskql_data = taskql_data
         self.familyql_data = familyql_data
+        self.globalql_data = globalql_data
 
     @staticmethod
     def _get_tasks_info(schd):
@@ -374,3 +399,7 @@ class StateSummaryMgr(object):
     def get_familyql_data(self):
         """Return the family summary resource the GraphQL endpoint."""
         return self.familyql_data
+
+    def get_globalql_data(self):
+        """Return the global summary resource the GraphQL endpoint."""
+        return self.globalql_data

@@ -852,6 +852,10 @@ conditions; see `cylc conditions`.
            return fdic[id]
         return None
 
+    def info_get_graphql_global(self):
+        """Return GraphQL global info dictionary."""
+        return self.state_summary_mgr.get_globalql_data()
+
     def info_ping_task(self, task_id, exists_only=False):
         """Return True if task exists and running."""
         task_id = self.get_standardised_taskid(task_id)
