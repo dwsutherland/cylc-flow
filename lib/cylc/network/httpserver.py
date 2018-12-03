@@ -65,7 +65,7 @@ elif auth_scheme == 'digest':
     auth = HTTPDigestAuth(use_ha1_pw=True)
     auth.user_digest = {}
 
-user_priv = { 
+user_priv = {
         'cylc': PRIVILEGE_LEVELS[-1],
     }
         #'anon': PRIV_STATE_TOTALS,
@@ -79,9 +79,9 @@ class InvalidUsage(Exception):
         if status_code is not None:
             self.status_code = status_code
         self.payload = payload
- 
+
     def to_dict(self):
-        rv = dict(self.payload or ()) 
+        rv = dict(self.payload or ())
         rv['message'] = self.message
         return rv
 
@@ -98,14 +98,14 @@ _num_id_requests = 0
 CLIENT_FORGET_SEC = 60
 CLIENT_ID_MIN_REPORT_RATE = 1.0  # 1 Hz
 CLIENT_ID_REPORT_SECONDS = 3600  # Report every 1 hour.
-CONNECT_DENIED_PRIV_TMPL = ( 
+CONNECT_DENIED_PRIV_TMPL = (
     "[client-connect] DENIED (privilege '%s' < '%s') %s@%s:%s %s" )
 LOG_COMMAND_TMPL = '[client-command] %s %s@%s:%s %s'
 LOG_IDENTIFY_TMPL = '[client-identify] %d id requests in PT%dS'
 LOG_FORGET_TMPL = '[client-forget] %s'
 LOG_CONNECT_ALLOWED_TMPL = "[client-connect] %s@%s:%s privilege='%s' %s"
 LOG_CONNECT_DENIED_TMPL = "[client-connect] DENIED %s@%s:%s %s"
-    
+
 #** Client info and privilege checking
 def _get_client_info():
     """Return information about the most recent flask request, if any."""
@@ -136,7 +136,7 @@ def _get_client_info():
 def create_app(schd_obj):
     """HTTP(S) server by flask-gevent, for serving suite runtime API."""
     app = flask.Flask(__name__)
-    
+
     # Make scheduler object available via the config
     app.config.update(
         DEBUG = False,
@@ -157,7 +157,7 @@ def create_app(schd_obj):
 
     if auth_scheme == 'basic':
         for username in users:
-            if "SHA1" in comms_options: 
+            if "SHA1" in comms_options:
                 # Note 'SHA1' not 'SHA'.
                 users[username] = sha1(users.get(username)).hexdigest()
             else:
@@ -182,7 +182,7 @@ def create_app(schd_obj):
             if username in users:
                 return auth.generate_ha1(username,users.get(username))
             return None
-        
+
         def _generate_digest_pair():
             return {
                 'nonce': md5(str(random.SystemRandom().random()
@@ -197,15 +197,15 @@ def create_app(schd_obj):
             try:
                 return auth.user_digest[auth_user]['nonce']
             except KeyError:
-                auth.user_digest[auth_user] = _generate_digest_pair() 
+                auth.user_digest[auth_user] = _generate_digest_pair()
             return auth.user_digest[auth_user]['nonce']
-        
+
         @auth.verify_nonce
         def verify_nonce(nonce):
             """Verify that the nonce value sent by the client is correct."""
             auth_user = flask.request.headers.get("From")
             return nonce == auth.user_digest[auth_user]['nonce']
-        
+
         @auth.generate_opaque
         def generate_opaque():
             """Return the opaque value to use for this client."""
@@ -213,9 +213,9 @@ def create_app(schd_obj):
             try:
                 return auth.user_digest[auth_user]['opaque']
             except KeyError:
-                auth.user_digest[auth_user] = _generate_digest_pair() 
+                auth.user_digest[auth_user] = _generate_digest_pair()
             return auth.user_digest[auth_user]['opaque']
-            
+
         @auth.verify_opaque
         def verify_opaque(opaque):
             """Verify that the opaque value sent by the client is correct."""
@@ -245,7 +245,7 @@ def create_app(schd_obj):
                 }
         )
         return auth.login_required(view)
- 
+
     app.add_url_rule(
         '/graphql',
         view_func=graphql_view(),
@@ -282,7 +282,7 @@ def start_app(app):
     else:
         try:
             context = (srv_files_mgr.get_auth_item(
-                    srv_files_mgr.FILE_BASE_SSL_CERT, suite), 
+                    srv_files_mgr.FILE_BASE_SSL_CERT, suite),
                     srv_files_mgr.get_auth_item(
                     srv_files_mgr.FILE_BASE_SSL_PEM, suite))
             flask_options['ssl_context'] = context
@@ -290,7 +290,7 @@ def start_app(app):
             LOG.error("no HTTPS/OpenSSL support. Aborting...")
             raise CylcError("No HTTPS support. "
                             "Configure user's global.rc to use HTTP.")
-    
+
     # Figure out the ports we are allowed to use.
     ok_ports = glbl_cfg().get(['suite servers', 'run ports'])
     random.shuffle(ok_ports)
@@ -318,7 +318,7 @@ def start_app(app):
                 return app_server
             except:
                 print "Unable to start api on port", port
-            
+
         if port == ok_ports[-1]:
             raise Exception("No available ports")
 
@@ -352,7 +352,7 @@ def api_blueprint(app):
                 return func(*args, **kwargs)
             return priv_wrapper
         return priv_decorator
-    
+
 
     #** EndPoints **
     @api_blu.route('/apiversion', methods = ['GET', 'POST'])
@@ -378,7 +378,7 @@ def api_blueprint(app):
           * cancel: a list of tuples. Each tuple contains the keys of a bad
             setting.
           JSON data e.g:
-          '{"point_strings": ["*"], "namespaces": ["foo"], 
+          '{"point_strings": ["*"], "namespaces": ["foo"],
           "cancel_settings": [{"environment": {"PERSON": "Bob"}}]}'
         """
         if not flask.request.is_json:
@@ -403,7 +403,7 @@ def api_blueprint(app):
         items = flask.request.args.get('items')
         if not isinstance(items, list):
             items = [items]
-        check_syntax = _literal_eval('check_syntax', 
+        check_syntax = _literal_eval('check_syntax',
             flask.request.args.get('check_syntax'))
         if check_syntax is None:
             check_syntax = True
@@ -921,7 +921,7 @@ def api_blueprint(app):
         items is a list of identifiers for matching task proxies.
         """
         items = flask.request.args.get('items')
-        back_out = _literal_eval('back_out', 
+        back_out = _literal_eval('back_out',
             flask.request.args.get('back_out'))
         if back_out is None:
             back_out = False
@@ -936,21 +936,21 @@ def api_blueprint(app):
     #** Priviledge checking
     def _access_priv_ok(required_privilege_level):
         """Return True if a client has enough privilege for given level.
-    
+
         The required privilege level is compared to the level granted to the
         client by the connection validator (held in thread local storage).
-    
+
         """
         try:
             return _check_access_priv(required_privilege_level)
         except InvalidUsage:
             return False
-    
+
     def _check_access_priv(required_privilege_level):
         """Raise an exception if client privilege is insufficient.
-    
+
         (See the documentation above for the boolean version of this function).
-    
+
         """
         auth_user, prog_name, user, host, uuid = _get_client_info()
         priv_level = _get_priv_level(auth_user)
@@ -959,23 +959,23 @@ def api_blueprint(app):
             err = CONNECT_DENIED_PRIV_TMPL % (
                 priv_level, required_privilege_level,
                 user, host, prog_name, uuid)
-            LOG.warning(CONNECT_DENIED_PRIV_TMPL, 
+            LOG.warning(CONNECT_DENIED_PRIV_TMPL,
                 priv_level, required_privilege_level,
                 user, host, prog_name, uuid)
             # Raise an exception to be sent back to the client.
             raise InvalidUsage(err, status_code=403)
         return True
-    
+
     def _check_access_priv_and_report(required_privilege_level, command=None,
         log_info=True):
         """Check access privilege and log requests with identifying info.
-    
+
         In debug mode log all requests including task messages. Otherwise log
         all user commands, and just the first info command from each client.
-    
+
         Return:
             dict: containing the client session
-    
+
         """
         _check_access_priv(required_privilege_level)
         if command is None:
@@ -990,7 +990,7 @@ def api_blueprint(app):
         clients[uuid]['time'] = time()
         _housekeep()
         return clients[uuid]
-    
+
     def _report_id_requests():
         """Report the frequency of identification (scan) requests."""
         global _num_id_requests
@@ -1010,7 +1010,7 @@ def api_blueprint(app):
         clients.setdefault(uuid, {})
         clients[uuid]['time'] = now
         _housekeep()
-       
+
     def _get_priv_level(auth_user):
         """Get the privilege level for this authenticated user."""
         if auth_user in user_priv:
@@ -1030,17 +1030,17 @@ def api_blueprint(app):
             LOG.removeHandler(client_info.get('err_log_handler'))
         LOG.debug(LOG_FORGET_TMPL, uuid)
         return True
-    
+
     def _housekeep():
         """Forget inactive clients."""
         for uuid, client_info in clients.copy().items():
             if time() - client_info['time'] > CLIENT_FORGET_SEC:
                 _forget_client(uuid)
-    
+
     # Sting to python value
     def _literal_eval(key, value, default=None):
         """Wrap ast.literal_eval if value is basestring.
-    
+
         On SyntaxError or ValueError, return default is default is not None.
         Otherwise, raise HTTPError 400.
         """

@@ -892,9 +892,9 @@ conditions; see `cylc conditions`.
         for n_id in n_dic:
             if ((not ('states' in args and args['states']) or
                         n_dic[n_id].state in args['states']) and
-                    (ndepth < 0 or 
+                    (ndepth < 0 or
                         n_dic[n_id].node_depth <= ndepth) and
-                    (not items or 
+                    (not items or
                         self._graphql_node_filter(
                             n_dic, n_id, items, node_type)) and
                     (not ('exstates' in args and args['exstates']) or
@@ -910,7 +910,7 @@ conditions; see `cylc conditions`.
         if id and id in tdic:
            return tdic[id]
         return None
-        
+
     def info_get_graphql_family(self, id=None):
         """Return GraphQL family object for given id."""
         fdic = self.state_summary_mgr.get_familyql_data()

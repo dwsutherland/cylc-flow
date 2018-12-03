@@ -219,7 +219,7 @@ class StateSummaryMgr(object):
             status_string = (SUITE_STATUS_RUNNING_TO_STOP % schd.final_point)
         else:
             status_string = SUITE_STATUS_RUNNING
-        
+
         global_summary['status_string'] = status_string
         globalql_data['status'] = status_string
 
@@ -252,7 +252,7 @@ class StateSummaryMgr(object):
             #taskql specific:
             task_parents = [TaskID.get(
                 pname, point_string) for pname in parents_dict[name]]
-            j_hosts = [] 
+            j_hosts = []
             for key in ts['job_hosts']:
                 jhost = QLJobHost(
                     submit_num = key,
@@ -265,8 +265,8 @@ class StateSummaryMgr(object):
                 if msg == 'submit-failed':
                     msg = 'submit_failed'
                 setattr(t_outs, msg, is_completed)
-     
-            prereq_list = [] 
+
+            prereq_list = []
             for item in task.state.prerequisites_dump():
                 t_prereq = QLPrereq(condition = item[0], message = item[1])
                 prereq_list.append(t_prereq)
@@ -312,7 +312,7 @@ class StateSummaryMgr(object):
             #taskql specific:
             task_parents = [TaskID.get(
                 pname, point_string) for pname in parents_dict[name]]
-            j_hosts = [] 
+            j_hosts = []
             for key in ts['job_hosts']:
                 jhost = QLJobHost(
                     submit_num = key,
@@ -325,8 +325,8 @@ class StateSummaryMgr(object):
                 if msg == 'submit-failed':
                     msg = 'submit_failed'
                 setattr(t_outs, msg, is_completed)
-     
-            prereq_list = [] 
+
+            prereq_list = []
             for item in task.state.prerequisites_dump():
                 t_prereq = QLPrereq(condition = item[0], message = item[1])
                 prereq_list.append(t_prereq)

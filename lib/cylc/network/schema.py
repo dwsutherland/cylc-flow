@@ -206,7 +206,7 @@ class QLFamily(graphene.ObjectType):
         depth=graphene.Int(default_value=-1),
         )
     node_depth = graphene.Int()
-    
+
     def resolve_tasks(self, info, **args):
         if self.tasks:
             schd = info.context.get('schd_obj')
