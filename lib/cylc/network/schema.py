@@ -27,6 +27,12 @@ from cylc.task_outputs import (
     TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
 
 
+class ApiVersion(graphene.ObjectType):
+    """Time zone info."""
+    class Meta:
+        default_resolver = dict_resolver
+    version = graphene.Int()
+
 class QLTimeZone(graphene.ObjectType):
     """Time zone info."""
     class Meta:
@@ -140,7 +146,8 @@ class QLTask(graphene.ObjectType):
         exitems=graphene.List(graphene.ID, default_value=[]),
         states=graphene.List(graphene.String, default_value=[]),
         exstates=graphene.List(graphene.String, default_value=[]),
-        depth=graphene.Int(default_value=-1)
+        mindepth=graphene.Int(default_value=-1),
+        maxdepth=graphene.Int(default_value=-1),
         )
     node_depth = graphene.Int()
 
@@ -182,6 +189,8 @@ class QLFamily(graphene.ObjectType):
         states=graphene.List(graphene.String, default_value=[]),
         exstates=graphene.List(graphene.String, default_value=[]),
         depth=graphene.Int(default_value=-1),
+        mindepth=graphene.Int(default_value=-1),
+        maxdepth=graphene.Int(default_value=-1),
         )
     tasks = relay.ConnectionField(
         TaskConnection,
@@ -192,7 +201,8 @@ class QLFamily(graphene.ObjectType):
         exitems=graphene.List(graphene.ID, default_value=[]),
         states=graphene.List(graphene.String, default_value=[]),
         exstates=graphene.List(graphene.String, default_value=[]),
-        depth=graphene.Int(default_value=-1),
+        mindepth=graphene.Int(default_value=-1),
+        maxdepth=graphene.Int(default_value=-1),
         )
     families = relay.ConnectionField(
         lambda: FamilyConnection,
@@ -203,7 +213,8 @@ class QLFamily(graphene.ObjectType):
         exitems=graphene.List(graphene.ID, default_value=[]),
         states=graphene.List(graphene.String, default_value=[]),
         exstates=graphene.List(graphene.String, default_value=[]),
-        depth=graphene.Int(default_value=-1),
+        mindepth=graphene.Int(default_value=-1),
+        maxdepth=graphene.Int(default_value=-1),
         )
     node_depth = graphene.Int()
 
@@ -241,9 +252,9 @@ class FamilyConnection(relay.Connection):
 
 class Query(graphene.ObjectType):
     node = relay.Node.Field()
-    apiversion = graphene.Int()
+    apiversion = graphene.Field(ApiVersion)
     globalInfo = graphene.Field(QLGlobal)
-    allTasks = relay.ConnectionField(
+    tasks = relay.ConnectionField(
         TaskConnection,
         id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
@@ -251,10 +262,11 @@ class Query(graphene.ObjectType):
         exitems=graphene.List(graphene.ID, default_value=[]),
         states=graphene.List(graphene.String, default_value=[]),
         exstates=graphene.List(graphene.String, default_value=[]),
-        depth=graphene.Int(default_value=-1),
+        mindepth=graphene.Int(default_value=-1),
+        maxdepth=graphene.Int(default_value=-1),
         )
 
-    allFamilies = relay.ConnectionField(
+    families = relay.ConnectionField(
         FamilyConnection,
         id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
@@ -262,21 +274,23 @@ class Query(graphene.ObjectType):
         exitems=graphene.List(graphene.ID, default_value=[]),
         states=graphene.List(graphene.String, default_value=[]),
         exstates=graphene.List(graphene.String, default_value=[]),
-        depth=graphene.Int(default_value=-1),
+        mindepth=graphene.Int(default_value=-1),
+        maxdepth=graphene.Int(default_value=-1),
         )
 
     def resolve_apiversion(self, info):
-        return info.context.get('app_server').config['API']
+        version = info.context.get('app_server').config['API']
+        return {'version': version}
 
     def resolve_globalInfo(self, info):
         schd = info.context.get('schd_obj')
         return schd.info_get_graphql_global()
 
-    def resolve_allTasks(self, info, **args):
+    def resolve_tasks(self, info, **args):
         schd = info.context.get('schd_obj')
         return schd.info_get_graphql_nodes(args, node_type='task')
 
-    def resolve_allFamilies(self, info, **args):
+    def resolve_families(self, info, **args):
         schd = info.context.get('schd_obj')
         return schd.info_get_graphql_nodes(args, node_type='family')
 

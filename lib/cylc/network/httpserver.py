@@ -436,7 +436,7 @@ def api_blueprint(app):
         """Return the cylc version running this suite."""
         return flask.jsonify(CYLC_VERSION)
 
-    @api_blu.route('/get_graph_raw', methods = ['GET'])
+    @api_blu.route('/get_graph_raw', methods = ['GET', 'POST'])
     @auth.login_required
     @priv_check(PRIV_FULL_READ)
     def get_graph_raw():
