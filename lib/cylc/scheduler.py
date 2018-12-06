@@ -855,7 +855,7 @@ conditions; see `cylc conditions`.
     def _graphql_node_filter(nodes_dic, node_id, items, node_type='task'):
         """Return true if GraphQL node matches any filter items"""
         for n_point, n_name, n_state in items:
-            if (fnmatchcase(nodes_dic[node_id].label, n_point) and
+            if (fnmatchcase(nodes_dic[node_id].cycle_point, n_point) and
                     (not n_state or nodes_dic[node_id].state == n_state) and
                     (fnmatchcase(nodes_dic[node_id].name, n_name) or
                         (node_type == 'task' and

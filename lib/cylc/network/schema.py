@@ -113,7 +113,7 @@ class QLTask(graphene.ObjectType):
         interfaces = (relay.Node,)
 
     name = graphene.String()
-    label = graphene.String()
+    cycle_point = graphene.String()
     state = graphene.String()
     title = graphene.String()
     description = graphene.String()
@@ -174,7 +174,7 @@ class QLFamily(graphene.ObjectType):
         interfaces = (relay.Node,)
 
     name = graphene.String()
-    label = graphene.String()
+    cycle_point = graphene.String()
     state = graphene.String()
     title = graphene.String()
     description = graphene.String()

@@ -128,7 +128,7 @@ class StateSummaryMgr(object):
                 familyql_data[f_id] = QLFamily(
                     id = f_id,
                     name = fam,
-                    label = point_string,
+                    cycle_point = point_string,
                     state = state,
                     title = title,
                     description = description,
@@ -274,7 +274,7 @@ class StateSummaryMgr(object):
             taskql_data[task.identity] = QLTask(
                 id = task.identity,
                 name = name,
-                label = point_string,
+                cycle_point = point_string,
                 state = ts['state'],
                 title = ts['title'],
                 description = ts['description'],
@@ -334,7 +334,7 @@ class StateSummaryMgr(object):
             taskql_data[task.identity] = QLTask(
                 id = task.identity,
                 name = name,
-                label = point_string,
+                cycle_point = point_string,
                 state = ts['state'],
                 title = ts['title'],
                 description = ts['description'],
