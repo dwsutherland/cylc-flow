@@ -19,12 +19,8 @@
 
 
 import graphene
-from graphene import relay
+#from graphene import relay
 from graphene.types.resolver import dict_resolver
-
-from cylc.task_outputs import (
-    TASK_OUTPUT_EXPIRED, TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_SUBMIT_FAILED,
-    TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
 
 
 class ApiVersion(graphene.ObjectType):
@@ -109,9 +105,9 @@ class QLOutputs(graphene.ObjectType):
 
 class QLTask(graphene.ObjectType):
     """Task unitary."""
-    class Meta:
-        interfaces = (relay.Node,)
-
+    #class Meta:
+    #    interfaces = (relay.Node,)
+    id = graphene.ID()
     name = graphene.String()
     cycle_point = graphene.String()
     state = graphene.String()
@@ -137,8 +133,10 @@ class QLTask(graphene.ObjectType):
     job_hosts = graphene.List(QLJobHost)
     prerequisites = graphene.List(QLPrereq)
     outputs = graphene.Field(QLOutputs)
-    parents = relay.ConnectionField(
-        lambda: FamilyConnection,
+    #parents = relay.ConnectionField(
+    #    lambda: FamilyConnection,
+    parents = graphene.List(
+        lambda: QLFamily,
         description="""Task parents.""",
         id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
@@ -158,29 +156,32 @@ class QLTask(graphene.ObjectType):
             return schd.info_get_graphql_nodes(args, node_type='family')
         return []
 
-    @classmethod
-    def get_node(cls, info, id):
-        schd = info.context.get('schd_obj')
-        return schd.info_get_graphql_task(id)
+    #@classmethod
+    #def get_node(cls, info, id):
+    #    schd = info.context.get('schd_obj')
+    #    return schd.info_get_graphql_task(id)
 
-class TaskConnection(relay.Connection):
-    class Meta:
-        node = QLTask
+#class TaskConnection(relay.Connection):
+#    class Meta:
+#        node = QLTask
 
 
 class QLFamily(graphene.ObjectType):
     """Family composite."""
-    class Meta:
-        interfaces = (relay.Node,)
+    #class Meta:
+    #    interfaces = (relay.Node,)
 
+    id = graphene.ID()
     name = graphene.String()
     cycle_point = graphene.String()
     state = graphene.String()
     title = graphene.String()
     description = graphene.String()
     URL = graphene.String()
-    parents = relay.ConnectionField(
-        lambda: FamilyConnection,
+    #parents = relay.ConnectionField(
+    #    lambda: FamilyConnection,
+    parents = graphene.List(
+        lambda: QLFamily,
         description="""Family parents.""",
         id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
@@ -192,8 +193,10 @@ class QLFamily(graphene.ObjectType):
         mindepth=graphene.Int(default_value=-1),
         maxdepth=graphene.Int(default_value=-1),
         )
-    tasks = relay.ConnectionField(
-        TaskConnection,
+    #tasks = relay.ConnectionField(
+    #    TaskConnection,
+    tasks = graphene.List(
+        lambda: QLTask,
         description="""Desendedant tasks.""",
         id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
@@ -204,8 +207,10 @@ class QLFamily(graphene.ObjectType):
         mindepth=graphene.Int(default_value=-1),
         maxdepth=graphene.Int(default_value=-1),
         )
-    families = relay.ConnectionField(
-        lambda: FamilyConnection,
+    #families = relay.ConnectionField(
+    #    lambda: FamilyConnection,
+    families = graphene.List(
+        lambda: QLFamily,
         description="""Desendedant families.""",
         id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
@@ -239,23 +244,25 @@ class QLFamily(graphene.ObjectType):
             return schd.info_get_graphql_nodes(args, node_type='family')
         return []
 
-    @classmethod
-    def get_node(cls, info, id):
-        schd = info.context.get('schd_obj')
-        return schd.info_get_graphql_family(id)
+    #@classmethod
+    #def get_node(cls, info, id):
+    #    schd = info.context.get('schd_obj')
+    #    return schd.info_get_graphql_family(id)
 
 
-class FamilyConnection(relay.Connection):
-    class Meta:
-        node = QLFamily
+#class FamilyConnection(relay.Connection):
+#    class Meta:
+#        node = QLFamily
 
 
 class Query(graphene.ObjectType):
-    node = relay.Node.Field()
+    #node = relay.Node.Field()
     apiversion = graphene.Field(ApiVersion)
     globalInfo = graphene.Field(QLGlobal)
-    tasks = relay.ConnectionField(
-        TaskConnection,
+    #tasks = relay.ConnectionField(
+    #    TaskConnection,
+    tasks = graphene.List(
+        QLTask,
         id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
         items=graphene.List(graphene.ID, default_value=[]),
@@ -266,8 +273,10 @@ class Query(graphene.ObjectType):
         maxdepth=graphene.Int(default_value=-1),
         )
 
-    families = relay.ConnectionField(
-        FamilyConnection,
+    #families = relay.ConnectionField(
+    #    FamilyConnection,
+    families = graphene.List(
+        QLFamily,
         id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
         items=graphene.List(graphene.ID, default_value=[]),
