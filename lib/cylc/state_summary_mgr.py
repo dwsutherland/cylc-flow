@@ -18,6 +18,7 @@
 """Manage suite state summary for client, e.g. GUI."""
 
 from time import time
+import json
 
 from cylc.task_id import TaskID
 from cylc.wallclock import (
@@ -67,6 +68,7 @@ class StateSummaryMgr(object):
         # Compute state_counts (total, and per cycle).
         state_count_totals = {}
         state_count_cycles = {}
+
 
         for point_string, c_task_states in task_states.items():
             # For each cycle point, construct a family state tree
@@ -130,9 +132,7 @@ class StateSummaryMgr(object):
                     name = fam,
                     cycle_point = point_string,
                     state = state,
-                    title = title,
-                    description = description,
-                    URL = url,
+                    meta = famcfg,
                     parents = famparents,
                     tasks = taskdescs,
                     families = famdescs,
@@ -142,10 +142,7 @@ class StateSummaryMgr(object):
         globalql_data['suite'] = schd.suite
         globalql_data['owner'] = schd.owner
         globalql_data['host'] = schd.host
-        globalql_data['title'] = schd.config.cfg['meta']['title']
-        globalql_data['description'] = schd.config.cfg['meta']['description']
-        globalql_data['group'] = schd.config.cfg['meta']['group']
-        globalql_data['url'] = schd.config.cfg['meta']['URL']
+        globalql_data['meta'] = schd.config.cfg['meta']
         globalql_data['tree_depth'] = max(
             [len(val) for key, val in ancestors_dict.items()])-1
 
@@ -259,7 +256,6 @@ class StateSummaryMgr(object):
                     job_host = ts['job_hosts'][key])
                 j_hosts.append(jhost)
 
-            taskmeta = task.tdef.describe()
             t_outs = QLOutputs()
             for _, msg, is_completed in task.state.outputs.get_all():
                 if msg == 'submit-failed':
@@ -276,9 +272,7 @@ class StateSummaryMgr(object):
                 name = name,
                 cycle_point = point_string,
                 state = ts['state'],
-                title = ts['title'],
-                description = ts['description'],
-                URL = taskmeta['URL'],
+                meta = task.tdef.describe(),
                 parents = task_parents,
                 spawned = ts['spawned'],
                 execution_time_limit = ts['execution_time_limit'],
@@ -319,7 +313,6 @@ class StateSummaryMgr(object):
                     job_host = ts['job_hosts'][key])
                 j_hosts.append(jhost)
 
-            taskmeta = task.tdef.describe()
             t_outs = QLOutputs()
             for _, msg, is_completed in task.state.outputs.get_all():
                 if msg == 'submit-failed':
@@ -336,9 +329,7 @@ class StateSummaryMgr(object):
                 name = name,
                 cycle_point = point_string,
                 state = ts['state'],
-                title = ts['title'],
-                description = ts['description'],
-                URL = taskmeta['URL'],
+                meta = task.tdef.describe(),
                 parents = task_parents,
                 spawned = ts['spawned'],
                 execution_time_limit = ts['execution_time_limit'],

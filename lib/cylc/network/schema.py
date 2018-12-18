@@ -20,6 +20,7 @@
 
 import graphene
 from graphene.types.resolver import dict_resolver
+from graphene.types.generic import GenericScalar
 
 
 def get_nodes(root, info, **args):
@@ -30,7 +31,7 @@ def get_nodes(root, info, **args):
     if type_obj_name == 'QLFamily':
         ntype = 'family'
     if hasattr(root, info.field_name):
-        args['items'] += getattr(root, info.field_name)
+        args['items'] = getattr(root, info.field_name)
     schd = info.context.get('schd_obj')
     return schd.info_get_graphql_nodes(args, node_type=ntype)
 
@@ -66,14 +67,10 @@ class QLGlobal(graphene.ObjectType):
     """Global suite info."""
     class Meta:
         default_resolver = dict_resolver
-
     suite = graphene.String()
     owner = graphene.String()
     host = graphene.String()
-    title = graphene.String()
-    description = graphene.String()
-    url = graphene.String()
-    group = graphene.String()
+    meta = GenericScalar()
     reloading = graphene.Boolean()
     time_zone_info = graphene.Field(QLTimeZone)
     last_updated = graphene.Float()
@@ -113,9 +110,7 @@ class QLTask(graphene.ObjectType):
     name = graphene.String()
     cycle_point = graphene.String()
     state = graphene.String()
-    title = graphene.String()
-    description = graphene.String()
-    URL = graphene.String()
+    meta = GenericScalar()
     spawned = graphene.Boolean()
     execution_time_limit = graphene.Float()
     submitted_time = graphene.Float()
@@ -157,9 +152,7 @@ class QLFamily(graphene.ObjectType):
     name = graphene.String()
     cycle_point = graphene.String()
     state = graphene.String()
-    title = graphene.String()
-    description = graphene.String()
-    URL = graphene.String()
+    meta = GenericScalar()
     parents = graphene.List(
         lambda: QLFamily,
         description="""Family parents.""",
@@ -203,6 +196,7 @@ class QLFamily(graphene.ObjectType):
     node_depth = graphene.Int()
 
 
+
 class Query(graphene.ObjectType):
     apiversion = graphene.Int(required=True)
     globalInfo = graphene.Field(QLGlobal)
@@ -237,6 +231,7 @@ class Query(graphene.ObjectType):
     def resolve_globalInfo(self, info):
         schd = info.context.get('schd_obj')
         return schd.info_get_graphql_global()
+
 
 
 schema = graphene.Schema(query=Query)
