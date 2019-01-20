@@ -32,6 +32,8 @@ def get_nodes(root, info, **args):
         ntype = 'family'
     if hasattr(root, info.field_name):
         args['items'] = getattr(root, info.field_name)
+        if not args['items']:
+            return []
     schd = info.context.get('schd_obj')
     return schd.info_get_graphql_nodes(args, node_type=ntype)
 

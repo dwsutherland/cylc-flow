@@ -131,6 +131,13 @@ def _get_client_info():
         user, host = ("Unknown", "Unknown")
     return auth_user, prog_name, user, host, uuid
 
+def _get_session_id():
+    try:
+        return flask.session['session_id']
+    except KeyError:
+        flask.session['session_id'] = str(uuid4())
+        return flask.session['session_id']
+
 
 #** API object creation
 def create_app(schd_obj):
@@ -193,34 +200,38 @@ def create_app(schd_obj):
         @auth.generate_nonce
         def generate_nonce():
             """Return the nonce value to use for this client."""
-            auth_user = flask.request.headers.get("From")
+            sessid = _get_session_id()
             try:
-                return auth.user_digest[auth_user]['nonce']
+                return auth.user_digest[sessid]['nonce']
             except KeyError:
-                auth.user_digest[auth_user] = _generate_digest_pair()
-            return auth.user_digest[auth_user]['nonce']
+                auth.user_digest[sessid] = _generate_digest_pair()
+            return auth.user_digest[sessid]['nonce']
 
         @auth.verify_nonce
         def verify_nonce(nonce):
             """Verify that the nonce value sent by the client is correct."""
-            auth_user = flask.request.headers.get("From")
-            return nonce == auth.user_digest[auth_user]['nonce']
+            sessid = _get_session_id()
+            if sessid not in auth.user_digest:
+                return False
+            return nonce == auth.user_digest[sessid]['nonce']
 
         @auth.generate_opaque
         def generate_opaque():
             """Return the opaque value to use for this client."""
-            auth_user = flask.request.headers.get("From")
+            sessid = _get_session_id()
             try:
-                return auth.user_digest[auth_user]['opaque']
+                return auth.user_digest[sessid]['opaque']
             except KeyError:
-                auth.user_digest[auth_user] = _generate_digest_pair()
-            return auth.user_digest[auth_user]['opaque']
+                auth.user_digest[sessid] = _generate_digest_pair()
+            return auth.user_digest[sessid]['opaque']
 
         @auth.verify_opaque
         def verify_opaque(opaque):
             """Verify that the opaque value sent by the client is correct."""
-            auth_user = flask.request.headers.get("From")
-            return opaque == auth.user_digest[auth_user]['opaque']
+            sessid = _get_session_id()
+            if sessid not in auth.user_digest:
+                return False
+            return opaque == auth.user_digest[sessid]['opaque']
 
 
     @app.errorhandler(InvalidUsage)
