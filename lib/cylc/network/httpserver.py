@@ -23,10 +23,7 @@ Implementation currently using flask via gevent.
 from gevent import pywsgi
 
 import ast
-import binascii
-import os
 import socket
-import ssl
 import random
 import re
 import inspect
@@ -52,6 +49,23 @@ from cylc.suite_srv_files_mgr import (
 from cylc.unicode_util import utf8_enforce
 from cylc.version import CYLC_VERSION
 from cylc.wallclock import RE_DATE_TIME_FORMAT_EXTENDED
+
+
+def _generate_random():
+    try:
+        ran_gen = random.SystemRandom().random()
+    except NotImplementedError:  # randomness source is not found
+        ran_gen = random.Random().random()
+    return md5(str(ran_gen).encode('utf-8')).hexdigest()
+
+
+def _get_session_id():
+    try:
+        return flask.session['session_id']
+    except KeyError:
+        flask.session['session_id'] = uuid4()
+        return flask.session['session_id']
+
 
 auth_scheme = glbl_cfg().get(['communication', 'authentication scheme'])
 comms_options = glbl_cfg().get(['communication', 'options'])
@@ -131,13 +145,6 @@ def _get_client_info():
         user, host = ("Unknown", "Unknown")
     return auth_user, prog_name, user, host, uuid
 
-def _get_session_id():
-    try:
-        return flask.session['session_id']
-    except KeyError:
-        flask.session['session_id'] = str(uuid4())
-        return flask.session['session_id']
-
 
 #** API object creation
 def create_app(schd_obj):
@@ -147,7 +154,7 @@ def create_app(schd_obj):
     # Make scheduler object available via the config
     app.config.update(
         DEBUG = False,
-        SECRET_KEY = binascii.hexlify(os.urandom(16)),
+        SECRET_KEY = _generate_random(),
         JSONIFY_PRETTYPRINT_REGULAR = False,
         COMMS_METHOD = glbl_cfg().get(['communication', 'method']),
         AUTH_SCHEME = glbl_cfg().get(
@@ -190,21 +197,14 @@ def create_app(schd_obj):
                 return auth.generate_ha1(username,users.get(username))
             return None
 
-        def _generate_digest_pair():
-            return {
-                'nonce': md5(str(random.SystemRandom().random()
-                    ).encode('utf-8')).hexdigest(),
-                'opaque': md5(str(random.SystemRandom().random()
-                    ).encode('utf-8')).hexdigest()}
 
         @auth.generate_nonce
         def generate_nonce():
             """Return the nonce value to use for this client."""
             sessid = _get_session_id()
-            try:
-                return auth.user_digest[sessid]['nonce']
-            except KeyError:
-                auth.user_digest[sessid] = _generate_digest_pair()
+            if sessid not in auth.user_digest:
+                auth.user_digest[sessid] = {}
+            auth.user_digest[sessid]['nonce'] = _generate_random()
             return auth.user_digest[sessid]['nonce']
 
         @auth.verify_nonce
@@ -219,10 +219,9 @@ def create_app(schd_obj):
         def generate_opaque():
             """Return the opaque value to use for this client."""
             sessid = _get_session_id()
-            try:
-                return auth.user_digest[sessid]['opaque']
-            except KeyError:
-                auth.user_digest[sessid] = _generate_digest_pair()
+            if sessid not in auth.user_digest:
+                auth.user_digest[sessid] = {}
+            auth.user_digest[sessid]['opaque'] = _generate_random()
             return auth.user_digest[sessid]['opaque']
 
         @auth.verify_opaque
