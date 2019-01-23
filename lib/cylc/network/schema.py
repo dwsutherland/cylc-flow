@@ -37,6 +37,14 @@ def get_nodes(root, info, **args):
     schd = info.context.get('schd_obj')
     return schd.info_get_graphql_nodes(args, node_type=ntype)
 
+class QLMeta(graphene.ObjectType):
+    """Meta data fields, and custom fields generic userdefined dump"""
+    class Meta:
+        default_resolver = dict_resolver
+    title = graphene.String(default_value=None)
+    description = graphene.String(default_value=None)
+    URL = graphene.String(default_value=None)
+    user_defined = GenericScalar(default_value={})
 
 class QLTimeZone(graphene.ObjectType):
     """Time zone info."""
@@ -72,7 +80,7 @@ class QLGlobal(graphene.ObjectType):
     suite = graphene.String()
     owner = graphene.String()
     host = graphene.String()
-    meta = GenericScalar()
+    meta = graphene.Field(QLMeta)
     reloading = graphene.Boolean()
     time_zone_info = graphene.Field(QLTimeZone)
     last_updated = graphene.Float()
@@ -112,7 +120,7 @@ class QLTask(graphene.ObjectType):
     name = graphene.String()
     cycle_point = graphene.String()
     state = graphene.String()
-    meta = GenericScalar()
+    meta = graphene.Field(QLMeta)
     spawned = graphene.Boolean()
     execution_time_limit = graphene.Float()
     submitted_time = graphene.Float()
@@ -154,7 +162,7 @@ class QLFamily(graphene.ObjectType):
     name = graphene.String()
     cycle_point = graphene.String()
     state = graphene.String()
-    meta = GenericScalar()
+    meta = graphene.Field(QLMeta)
     parents = graphene.List(
         lambda: QLFamily,
         description="""Family parents.""",

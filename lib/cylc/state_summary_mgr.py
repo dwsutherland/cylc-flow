@@ -30,7 +30,7 @@ from cylc.suite_status import (
 from cylc.task_state import TASK_STATUS_RUNAHEAD
 from cylc.task_state_prop import extract_group_state
 
-from cylc.network.schema import QLPrereq, QLJobHost, QLOutputs, QLTask, QLFamily
+from cylc.network.schema import QLFamily, QLJobHost, QLOutputs, QLPrereq, QLTask
 
 
 class StateSummaryMgr(object):
@@ -126,13 +126,21 @@ class StateSummaryMgr(object):
                         else:
                             taskdescs.append(
                                 TaskID.get(desc_name, point_string))
+                metaql = {}
+                user_metaql = {}
+                for key, value in famcfg.iteritems():
+                    if key in ['title', 'description', 'URL']:
+                        metaql[key] = value
+                    else:
+                        user_metaql[key] = value
+                metaql['user_defined'] = user_metaql
 
                 familyql_data[f_id] = QLFamily(
                     id = f_id,
                     name = fam,
                     cycle_point = point_string,
                     state = state,
-                    meta = famcfg,
+                    meta = metaql,
                     parents = famparents,
                     tasks = taskdescs,
                     families = famdescs,
@@ -143,6 +151,15 @@ class StateSummaryMgr(object):
         globalql_data['owner'] = schd.owner
         globalql_data['host'] = schd.host
         globalql_data['meta'] = schd.config.cfg['meta']
+        metaql = {}
+        user_metaql = {}
+        for key, value in schd.config.cfg['meta'].iteritems():
+            if key in ['title', 'description', 'URL']:
+                metaql[key] = value
+            else:
+                user_metaql[key] = value
+        metaql['user_defined'] = user_metaql
+
         globalql_data['tree_depth'] = max(
             [len(val) for key, val in ancestors_dict.items()])-1
 
@@ -267,12 +284,21 @@ class StateSummaryMgr(object):
                 t_prereq = QLPrereq(condition = item[0], message = item[1])
                 prereq_list.append(t_prereq)
 
+            metaql = {}
+            user_metaql = {}
+            for key, value in task.tdef.describe().iteritems():
+                if key in ['title', 'description', 'URL']:
+                    metaql[key] = value
+                else:
+                    user_metaql[key] = value
+            metaql['user_defined'] = user_metaql
+
             taskql_data[task.identity] = QLTask(
                 id = task.identity,
                 name = name,
                 cycle_point = point_string,
                 state = ts['state'],
-                meta = task.tdef.describe(),
+                meta = metaql,
                 parents = task_parents,
                 spawned = ts['spawned'],
                 execution_time_limit = ts['execution_time_limit'],
@@ -324,12 +350,21 @@ class StateSummaryMgr(object):
                 t_prereq = QLPrereq(condition = item[0], message = item[1])
                 prereq_list.append(t_prereq)
 
+            metaql = {}
+            user_metaql = {}
+            for key, value in task.tdef.describe().iteritems():
+                if key in ['title', 'description', 'URL']:
+                    metaql[key] = value
+                else:
+                    user_metaql[key] = value
+            metaql['user_defined'] = user_metaql
+
             taskql_data[task.identity] = QLTask(
                 id = task.identity,
                 name = name,
                 cycle_point = point_string,
                 state = ts['state'],
-                meta = task.tdef.describe(),
+                meta = metaql,
                 parents = task_parents,
                 spawned = ts['spawned'],
                 execution_time_limit = ts['execution_time_limit'],
