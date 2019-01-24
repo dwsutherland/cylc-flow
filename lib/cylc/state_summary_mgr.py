@@ -128,7 +128,7 @@ class StateSummaryMgr(object):
                                 TaskID.get(desc_name, point_string))
                 metaql = {}
                 user_metaql = {}
-                for key, value in famcfg.iteritems():
+                for key, value in famcfg.items():
                     if key in ['title', 'description', 'URL']:
                         metaql[key] = value
                     else:
@@ -150,15 +150,15 @@ class StateSummaryMgr(object):
         globalql_data['suite'] = schd.suite
         globalql_data['owner'] = schd.owner
         globalql_data['host'] = schd.host
-        globalql_data['meta'] = schd.config.cfg['meta']
         metaql = {}
         user_metaql = {}
-        for key, value in schd.config.cfg['meta'].iteritems():
+        for key, value in schd.config.cfg['meta'].items():
             if key in ['title', 'description', 'URL']:
                 metaql[key] = value
             else:
                 user_metaql[key] = value
         metaql['user_defined'] = user_metaql
+        globalql_data['meta'] = metaql
 
         globalql_data['tree_depth'] = max(
             [len(val) for key, val in ancestors_dict.items()])-1
@@ -286,7 +286,7 @@ class StateSummaryMgr(object):
 
             metaql = {}
             user_metaql = {}
-            for key, value in task.tdef.describe().iteritems():
+            for key, value in task.tdef.describe().items():
                 if key in ['title', 'description', 'URL']:
                     metaql[key] = value
                 else:
@@ -352,7 +352,7 @@ class StateSummaryMgr(object):
 
             metaql = {}
             user_metaql = {}
-            for key, value in task.tdef.describe().iteritems():
+            for key, value in task.tdef.describe().items():
                 if key in ['title', 'description', 'URL']:
                     metaql[key] = value
                 else:
