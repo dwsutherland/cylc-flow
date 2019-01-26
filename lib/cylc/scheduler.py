@@ -837,13 +837,13 @@ conditions; see `cylc conditions`.
         """Return prerequisites of a task."""
         return self.pool.get_task_requisites(items, list_prereqs=list_prereqs)
 
-    def _graphql_id_parse(self, item):
+    def _node_id_parse(self, item, n_type):
         """Return id tuple for search item"""
         # Head of TaskPool filter_task_proxies
         point_str, name_str, status = self.pool.parse_task_item(item)
-        if point_str is None:
+        if not point_str and n_type not in ['QLTask']:
             point_str = "*"
-        else:
+        elif point_str:
             try:
                 point_str = standardise_point_string(point_str)
             except ValueError:
@@ -852,84 +852,71 @@ conditions; see `cylc conditions`.
         return (point_str, name_str, status)
 
     @staticmethod
-    def _graphql_node_filter(nodes_dic, node_id, items, node_type='task'):
+    def _node_filter(node, items, n_type):
         """Return true if GraphQL node matches any filter items"""
-        for n_point, n_name, n_state in items:
-            if (fnmatchcase(nodes_dic[node_id].cycle_point, n_point) and
-                    (not n_state or nodes_dic[node_id].state == n_state) and
-                    (fnmatchcase(nodes_dic[node_id].name, n_name) or
-                        (node_type == 'task' and
-                            any(fnmatchcase(ns, n_name)
-                            for ns in nodes_dic[node_id].namespace)))):
+        if n_type == 'QLTask':
+            natts = [None, node.namespace, None]
+        if n_type == 'QLTaskProxy':
+            natts = [node.cycle_point, node.namespace, node.state]
+        elif n_type == 'QLFamily':
+            natts = [node.cycle_point, [node.name], node.state]
+        for point, name, state in items:
+            if ((not point or fnmatchcase(natts[0], point)) and
+                    any(fnmatchcase(nn, name) for nn in natts[1]) and
+                    (not state or natts[2] == state)):
                 return True
         return False
 
-    def info_get_graphql_nodes(self, args={}, node_type='task'):
+    def info_get_nodes(self, args={}, n_type='QLTaskProxy'):
         """Return list of GraphQL node objects"""
         # We could split this into task and family specific functions,
         # this would be needed if the filtering diverges
         # graphql validates argument types so no need to check
         items = []
-        if 'items' in args:
-            items += [self._graphql_id_parse(id) for id in args['items']]
+        items += [self._node_id_parse(id, n_type) for id in args['items']]
         if 'id' in args:
-            items.append(self._graphql_id_parse(args['id']))
+            items.append(self._node_id_parse(args['id'], n_type))
         exitems = []
-        if 'exitems' in args:
-            exitems += [self._graphql_id_parse(id) for id in args['exitems']]
+        exitems += [self._node_id_parse(id, n_type) for id in args['exitems']]
         if 'exid' in args:
-            exitems.append(self._graphql_id_parse(args['exid']))
-
-        if 'mindepth' in args:
-            mindepth = args['mindepth']
-        else:
-            mindepth = -1
-
-        if 'maxdepth' in args:
-            maxdepth = args['maxdepth']
-        else:
-            maxdepth = -1
-
-        if node_type == 'task':
-            n_dic = self.state_summary_mgr.get_taskql_data()
-        elif node_type == 'family':
-            n_dic = self.state_summary_mgr.get_familyql_data()
-
+            exitems.append(self._node_id_parse(args['exid'], n_type))
+        if n_type == 'QLTask':
+            nodes = self.state_summary_mgr.task_data
+        elif n_type == 'QLTaskProxy':
+            nodes = self.state_summary_mgr.taskproxy_data
+        elif n_type == 'QLFamily':
+            nodes = self.state_summary_mgr.family_data
         result = []
-        for n_id in n_dic:
-            if ((not ('states' in args and args['states']) or
-                        n_dic[n_id].state in args['states']) and
-                    (mindepth < 0 or
-                        n_dic[n_id].node_depth >= mindepth) and
-                    (maxdepth < 0 or
-                        n_dic[n_id].node_depth <= maxdepth) and
-                    (not items or
-                        self._graphql_node_filter(
-                            n_dic, n_id, items, node_type)) and
-                    (not ('exstates' in args and args['exstates']) or
-                        n_dic[n_id].state not in args['exstates']) and
-                    (not exitems or not self._graphql_node_filter(
-                        n_dic, n_id, exitems, node_type))):
-                result.append(n_dic[n_id])
+        for node in nodes.values():
+            #print(node.proxies)
+            if ((not args.get('states') or node.state in args['states']) and
+                    not (args.get('exstates') and
+                        node.state in args['exstates']) and
+                    (args['mindepth'] < 0 or
+                        node.depth >= args['mindepth']) and
+                    (args['maxdepth'] < 0 or
+                        node.depth <= args['maxdepth']) and
+                    (not items or self._node_filter(node, items, n_type)) and
+                    not (exitems and
+                        self._node_filter(node, exitems, n_type))):
+                result.append(node)
         return result
 
-    def info_get_graphql_task(self, id=None):
+    def info_get_node(self, args={}, n_type='QLTask'):
         """Return GrapphQL task object for given id."""
-        tdic = self.state_summary_mgr.get_taskql_data()
-        if id and id in tdic:
-           return tdic[id]
+        if n_type == 'QLTask':
+            nodes = self.state_summary_mgr.task_data
+        elif n_type == 'QLTaskProxy':
+            nodes = self.state_summary_mgr.taskproxy_data
+        elif n_type == 'QLFamily':
+            nodes = self.state_summary_mgr.family_data
+        if args['id']:
+            return nodes[args['id']]
         return None
 
-    def info_get_graphql_family(self, id=None):
-        """Return GraphQL family object for given id."""
-        fdic = self.state_summary_mgr.get_familyql_data()
-        if id and id in fdic:
-           return fdic[id]
-        return None
-
-    def info_get_graphql_global(self):
+    def info_get_global_data(self):
         """Return GraphQL global info dictionary."""
-        return self.state_summary_mgr.get_globalql_data()
+        return self.state_summary_mgr.global_data
 
     def info_ping_task(self, task_id, exists_only=False):
         """Return True if task exists and running."""

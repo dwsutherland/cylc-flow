@@ -22,21 +22,26 @@ import graphene
 from graphene.types.resolver import dict_resolver
 from graphene.types.generic import GenericScalar
 
-
+## Resolvers:
 def get_nodes(root, info, **args):
     """Resolver for returning job, task, family nodes"""
-    type_obj_name = str(info.return_type.of_type)
-    if type_obj_name == 'QLTask':
-        ntype = 'task'
-    if type_obj_name == 'QLFamily':
-        ntype = 'family'
-    if hasattr(root, info.field_name):
-        args['items'] = getattr(root, info.field_name)
+    field_items = getattr(root, info.field_name, None)
+    if field_items:
+        args['items'] = field_items
         if not args['items']:
             return []
     schd = info.context.get('schd_obj')
-    return schd.info_get_graphql_nodes(args, node_type=ntype)
+    return schd.info_get_nodes(args, n_type=str(info.return_type.of_type))
 
+def get_node(root, info, **args):
+    """Resolver for returning job, task, family nodes"""
+    field_id = getattr(root, info.field_name, None)
+    if field_id:
+        args['id'] = field_id
+    schd = info.context.get('schd_obj')
+    return schd.info_get_node(args, n_type=str(info.return_type.of_type))
+
+## Types:
 class QLMeta(graphene.ObjectType):
     """Meta data fields, and custom fields generic userdefined dump"""
     class Meta:
@@ -77,7 +82,7 @@ class QLGlobal(graphene.ObjectType):
     """Global suite info."""
     class Meta:
         default_resolver = dict_resolver
-    suite = graphene.String()
+    suite = graphene.String(required=True)
     owner = graphene.String()
     host = graphene.String()
     meta = graphene.Field(QLMeta)
@@ -94,16 +99,27 @@ class QLGlobal(graphene.ObjectType):
     oldest_cycle_point = graphene.String()
     tree_depth = graphene.Int()
 
-
-class QLPrereq(graphene.ObjectType):
-    """Task prerequisite."""
-    condition = graphene.String()
-    message = graphene.String()
-
-class QLJobHost(graphene.ObjectType):
-    """Task job host."""
-    submit_num = graphene.Int()
-    job_host = graphene.String()
+class QLTask(graphene.ObjectType):
+    """Task definition, static fields"""
+    id = graphene.ID(required=True)
+    name = graphene.String(required=True)
+    meta = graphene.Field(QLMeta)
+    mean_elapsed_time = graphene.Float()
+    namespace = graphene.List(graphene.String,required=True)
+    depth = graphene.Int()
+    proxies = graphene.List(
+        lambda: QLTaskProxy,
+        description="""Associated cycle point proxies""",
+        id=graphene.ID(default_value=None),
+        exid=graphene.ID(default_value=None),
+        items=graphene.List(graphene.ID, default_value=[]),
+        exitems=graphene.List(graphene.ID, default_value=[]),
+        states=graphene.List(graphene.String, default_value=[]),
+        exstates=graphene.List(graphene.String, default_value=[]),
+        mindepth=graphene.Int(default_value=-1),
+        maxdepth=graphene.Int(default_value=-1),
+        resolver=get_nodes
+        )
 
 class QLOutputs(graphene.ObjectType):
     """Task State Outputs"""
@@ -114,32 +130,64 @@ class QLOutputs(graphene.ObjectType):
     succeeded = graphene.Boolean()
     failed = graphene.Boolean()
 
-class QLTask(graphene.ObjectType):
-    """Task unitary."""
-    id = graphene.ID()
-    name = graphene.String()
-    cycle_point = graphene.String()
+class QLJob(graphene.ObjectType):
+    """Jobs."""
+    id = graphene.ID(required=True)
     state = graphene.String()
-    meta = graphene.Field(QLMeta)
-    spawned = graphene.Boolean()
-    execution_time_limit = graphene.Float()
+    host = graphene.String()
+    submit_num = graphene.Int()
+    submit_method_id = graphene.ID()
+    batch_sys_name = graphene.String()
     submitted_time = graphene.Float()
     started_time = graphene.Float()
     finished_time = graphene.Float()
-    mean_elapsed_time = graphene.Float()
     submitted_time_string = graphene.String()
     started_time_string = graphene.String()
     finished_time_string = graphene.String()
-    host = graphene.String()
-    batch_sys_name = graphene.String()
-    submit_method_id = graphene.String()
-    submit_num = graphene.Int()
-    namespace = graphene.List(graphene.String)
+    execution_time_limit = graphene.Float()
     logfiles = graphene.List(graphene.String)
-    latest_message = graphene.String()
-    job_hosts = graphene.List(QLJobHost)
-    prerequisites = graphene.List(QLPrereq)
     outputs = graphene.Field(QLOutputs)
+    task_proxy = graphene.List(
+        lambda: QLTaskProxy,
+        description="""Associated Task Proxy""",
+        resolver=get_node
+        )
+
+class QLPrereq(graphene.ObjectType):
+    """Task prerequisite."""
+    condition = graphene.String()
+    message = graphene.String()
+
+class QLTaskProxy(graphene.ObjectType):
+    """Task Cycle Specific info"""
+    id = graphene.ID(required=True)
+    task = graphene.Field(
+        lambda: QLTask,
+        description="""Task definition""",
+        required=True,
+        resolver=get_node
+        )
+    cycle_point = graphene.String()
+    state = graphene.String()
+    spawned = graphene.Boolean()
+    latest_message = graphene.String()
+    prerequisites = graphene.List(QLPrereq)
+    job_submits = graphene.Int()
+    namespace = graphene.List(graphene.String,required=True)
+    depth = graphene.Int()
+    jobs = graphene.List(
+        QLJob,
+        description="""Task jobs.""",
+        id=graphene.ID(default_value=None),
+        exid=graphene.ID(default_value=None),
+        items=graphene.List(graphene.ID, default_value=[]),
+        exitems=graphene.List(graphene.ID, default_value=[]),
+        states=graphene.List(graphene.String, default_value=[]),
+        exstates=graphene.List(graphene.String, default_value=[]),
+        mindepth=graphene.Int(default_value=-1),
+        maxdepth=graphene.Int(default_value=-1),
+        resolver=get_node
+        )
     parents = graphene.List(
         lambda: QLFamily,
         description="""Task parents.""",
@@ -153,13 +201,11 @@ class QLTask(graphene.ObjectType):
         maxdepth=graphene.Int(default_value=-1),
         resolver=get_nodes
         )
-    node_depth = graphene.Int()
-
 
 class QLFamily(graphene.ObjectType):
     """Family composite."""
-    id = graphene.ID()
-    name = graphene.String()
+    id = graphene.ID(required=True)
+    name = graphene.String(required=True)
     cycle_point = graphene.String()
     state = graphene.String()
     meta = graphene.Field(QLMeta)
@@ -177,8 +223,8 @@ class QLFamily(graphene.ObjectType):
         maxdepth=graphene.Int(default_value=-1),
         resolver=get_nodes
         )
-    tasks = graphene.List(
-        lambda: QLTask,
+    task_proxies = graphene.List(
+        lambda: QLTaskProxy,
         description="""Desendedant tasks.""",
         id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
@@ -203,15 +249,23 @@ class QLFamily(graphene.ObjectType):
         maxdepth=graphene.Int(default_value=-1),
         resolver=get_nodes
         )
-    node_depth = graphene.Int()
-
+    depth = graphene.Int()
 
 
 class Query(graphene.ObjectType):
-    apiversion = graphene.Int(required=True)
     globalInfo = graphene.Field(QLGlobal)
     tasks = graphene.List(
         QLTask,
+        id=graphene.ID(default_value=None),
+        exid=graphene.ID(default_value=None),
+        items=graphene.List(graphene.ID, default_value=[]),
+        exitems=graphene.List(graphene.ID, default_value=[]),
+        mindepth=graphene.Int(default_value=-1),
+        maxdepth=graphene.Int(default_value=-1),
+        resolver=get_nodes
+        )
+    task_proxies = graphene.List(
+        QLTaskProxy,
         id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
         items=graphene.List(graphene.ID, default_value=[]),
@@ -235,13 +289,9 @@ class Query(graphene.ObjectType):
         resolver=get_nodes
         )
 
-    def resolve_apiversion(self, info):
-        return info.context.get('app_server').config['API']
-
     def resolve_globalInfo(self, info):
         schd = info.context.get('schd_obj')
-        return schd.info_get_graphql_global()
-
+        return schd.info_get_global_data()
 
 
 schema = graphene.Schema(query=Query)

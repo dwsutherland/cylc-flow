@@ -30,7 +30,7 @@ from cylc.suite_status import (
 from cylc.task_state import TASK_STATUS_RUNAHEAD
 from cylc.task_state_prop import extract_group_state
 
-from cylc.network.schema import QLFamily, QLJobHost, QLOutputs, QLPrereq, QLTask
+from cylc.network.schema import QLFamily, QLOutputs, QLPrereq, QLTask, QLTaskProxy
 
 
 class StateSummaryMgr(object):
@@ -39,6 +39,7 @@ class StateSummaryMgr(object):
     TIME_FIELDS = ['submitted_time', 'started_time', 'finished_time']
 
     def __init__(self):
+        # Legacy REST summary objects
         self.task_summary = {}
         self.global_summary = {}
         self.family_summary = {}
@@ -46,19 +47,22 @@ class StateSummaryMgr(object):
         self.state_count_totals = {}
         self.state_count_cycles = {}
 
-        self.taskql_data = {}
-        self.familyql_data = {}
-        self.globalql_data = {}
+        # GraphQL data objects
+        self.task_data = {}
+        self.taskproxy_data = {}
+        self.family_data = {}
+        self.global_data = {}
 
     def update(self, schd):
         """Update."""
         self.update_time = time()
         global_summary = {}
         family_summary = {}
-        familyql_data = {}
-        globalql_data = {}
+        family_data = {}
+        global_data = {}
 
-        task_summary, task_states, taskql_data = self._get_tasks_info(schd)
+        task_summary, task_states, task_data, taskproxy_data = \
+            self._get_tasks_info(schd)
 
         all_states = []
         ancestors_dict = schd.config.get_first_parent_ancestors()
@@ -135,21 +139,21 @@ class StateSummaryMgr(object):
                         user_metaql[key] = value
                 metaql['user_defined'] = user_metaql
 
-                familyql_data[f_id] = QLFamily(
+                family_data[f_id] = QLFamily(
                     id = f_id,
                     name = fam,
                     cycle_point = point_string,
                     state = state,
                     meta = metaql,
                     parents = famparents,
-                    tasks = taskdescs,
+                    task_proxies = taskdescs,
                     families = famdescs,
-                    node_depth = len(ancestors_dict[fam])-1)
+                    depth = len(ancestors_dict[fam])-1)
 
 
-        globalql_data['suite'] = schd.suite
-        globalql_data['owner'] = schd.owner
-        globalql_data['host'] = schd.host
+        global_data['suite'] = schd.suite
+        global_data['owner'] = schd.owner
+        global_data['host'] = schd.host
         metaql = {}
         user_metaql = {}
         for key, value in schd.config.cfg['meta'].items():
@@ -158,9 +162,9 @@ class StateSummaryMgr(object):
             else:
                 user_metaql[key] = value
         metaql['user_defined'] = user_metaql
-        globalql_data['meta'] = metaql
+        global_data['meta'] = metaql
 
-        globalql_data['tree_depth'] = max(
+        global_data['tree_depth'] = max(
             [len(val) for key, val in ancestors_dict.items()])-1
 
         state_count_totals = {}
@@ -181,17 +185,17 @@ class StateSummaryMgr(object):
                     schd.pool.get_max_point_runahead())):
             if value:
                 global_summary[key1] = str(value)
-                globalql_data[key2] = str(value)
+                global_data[key2] = str(value)
             else:
                 global_summary[key1] = None
-                globalql_data[key2] = None
+                global_data[key2] = None
 
         if get_utc_mode():
             global_summary['time zone info'] = TIME_ZONE_UTC_INFO
-            globalql_data['time_zone_info'] = TIME_ZONE_UTC_INFO
+            global_data['time_zone_info'] = TIME_ZONE_UTC_INFO
         else:
             global_summary['time zone info'] = TIME_ZONE_LOCAL_INFO
-            globalql_data['time_zone_info'] = TIME_ZONE_LOCAL_INFO
+            global_data['time_zone_info'] = TIME_ZONE_LOCAL_INFO
         global_summary['last_updated'] = self.update_time
         global_summary['run_mode'] = schd.run_mode
         global_summary['states'] = all_states
@@ -200,13 +204,13 @@ class StateSummaryMgr(object):
         global_summary['reloading'] = schd.pool.do_reload
         global_summary['state totals'] = state_count_totals
 
-        globalql_data['last_updated'] = self.update_time
-        globalql_data['run_mode'] = schd.run_mode
-        globalql_data['states'] = all_states
-        globalql_data['namespace_definition_order'] = (
+        global_data['last_updated'] = self.update_time
+        global_data['run_mode'] = schd.run_mode
+        global_data['states'] = all_states
+        global_data['namespace_definition_order'] = (
             schd.config.ns_defn_order)
-        globalql_data['reloading'] = schd.pool.do_reload
-        globalql_data['state_totals'] = state_count_totals
+        global_data['reloading'] = schd.pool.do_reload
+        global_data['state_totals'] = state_count_totals
 
         # Extract suite and task URLs from config.
         global_summary['suite_urls'] = dict(
@@ -235,7 +239,7 @@ class StateSummaryMgr(object):
             status_string = SUITE_STATUS_RUNNING
 
         global_summary['status_string'] = status_string
-        globalql_data['status'] = status_string
+        global_data['status'] = status_string
 
         # Replace the originals (atomic update, for access from other threads).
         self.task_summary = task_summary
@@ -243,9 +247,10 @@ class StateSummaryMgr(object):
         self.family_summary = family_summary
         self.state_count_totals = state_count_totals
         self.state_count_cycles = state_count_cycles
-        self.taskql_data = taskql_data
-        self.familyql_data = familyql_data
-        self.globalql_data = globalql_data
+        self.task_data = task_data
+        self.taskproxy_data = taskproxy_data
+        self.family_data = family_data
+        self.global_data = global_data
 
     @staticmethod
     def _get_tasks_info(schd):
@@ -253,140 +258,133 @@ class StateSummaryMgr(object):
 
         task_summary = {}
         task_states = {}
-        taskql_data = {}
+        task_data = {}
+        taskproxy_data = {}
         ancestors_dict = schd.config.get_first_parent_ancestors()
         parents_dict = schd.config.get_parent_lists()
 
+        # create task definition data objects
+        for name, tdef in schd.config.taskdefs.items():
+            tmeta = dict(tdef.describe())
+            user_tmeta = {}
+            for key, val in tmeta.items():
+                if key not in ['title', 'description', 'URL']:
+                    user_tmeta[key] = val
+                    tmeta.pop(key)
+            tmeta['user_defined'] = user_tmeta
+            task_data[name] = QLTask(
+                id = name,
+                name = name,
+                meta = tmeta,
+                namespace = tdef.namespace_hierarchy,
+                mean_elapsed_time = None,
+                depth = len(ancestors_dict[name])-1,
+                proxies = [])
+            ntimes = len(tdef.elapsed_times)
+            if ntimes:
+                task_data[name].mean_elapsed_time = (
+                    float(sum(tdef.elapsed_times)) / ntimes)
+            elif tdef.rtconfig['job']['execution time limit']:
+                task_data[name].mean_elapsed_time = \
+                    tdef.rtconfig['job']['execution time limit']
+
         for task in schd.pool.get_tasks():
             ts = task.get_state_summary()
-            task_summary[task.identity] = ts
             name, point_string = TaskID.split(task.identity)
+            # legacy
+            task_summary[task.identity] = ts
             task_states.setdefault(point_string, {})
             task_states[point_string][name] = ts['state']
-            #taskql specific:
+            # graphql new:
+            task_data[name].proxies.append(task.identity)
             task_parents = [TaskID.get(
                 pname, point_string) for pname in parents_dict[name]]
-            j_hosts = []
-            for key in ts['job_hosts']:
-                jhost = QLJobHost(
-                    submit_num = key,
-                    job_host = ts['job_hosts'][key])
-                j_hosts.append(jhost)
-
-            t_outs = QLOutputs()
-            for _, msg, is_completed in task.state.outputs.get_all():
-                if msg == 'submit-failed':
-                    msg = 'submit_failed'
-                setattr(t_outs, msg, is_completed)
 
             prereq_list = []
             for item in task.state.prerequisites_dump():
                 t_prereq = QLPrereq(condition = item[0], message = item[1])
                 prereq_list.append(t_prereq)
 
-            metaql = {}
-            user_metaql = {}
-            for key, value in task.tdef.describe().items():
-                if key in ['title', 'description', 'URL']:
-                    metaql[key] = value
-                else:
-                    user_metaql[key] = value
-            metaql['user_defined'] = user_metaql
-
-            taskql_data[task.identity] = QLTask(
+            taskproxy_data[task.identity] = QLTaskProxy(
                 id = task.identity,
-                name = name,
+                task = name,
                 cycle_point = point_string,
                 state = ts['state'],
-                meta = metaql,
+                jobs = [],
                 parents = task_parents,
-                spawned = ts['spawned'],
-                execution_time_limit = ts['execution_time_limit'],
-                submitted_time = ts['submitted_time'],
-                started_time = ts['started_time'],
-                finished_time = ts['finished_time'],
-                mean_elapsed_time = ts['mean_elapsed_time'],
-                submitted_time_string = ts['submitted_time_string'],
-                started_time_string = ts['started_time_string'],
-                finished_time_string = ts['finished_time_string'],
-                host = task.task_host,
-                batch_sys_name = ts['batch_sys_name'],
-                submit_method_id = ts['submit_method_id'],
-                submit_num = ts['submit_num'],
                 namespace = task.tdef.namespace_hierarchy,
-                logfiles = ts['logfiles'],
+                spawned = ts['spawned'],
+                job_submits = ts['submit_num'],
                 latest_message = ts['latest_message'],
-                job_hosts = j_hosts,
                 prerequisites = prereq_list,
-                outputs = t_outs,
-                node_depth = len(ancestors_dict[name])-1)
+                depth = len(ancestors_dict[name])-1)
 
+#            t_outs = QLOutputs()
+#            for _, msg, is_completed in task.state.outputs.get_all():
+#                if msg == 'submit-failed':
+#                    msg = 'submit_failed'
+#                setattr(t_outs, msg, is_completed)
+
+#            taskproxy_data[task.identity] = QLTask(
+#                id = task.identity,
+#                name = name,
+#                cycle_point = point_string,
+#                state = ts['state'],
+#                task = metaql,
+#                jobs = [],
+#                parents = task_parents,
+#                spawned = ts['spawned'],
+#                execution_time_limit = ts['execution_time_limit'],
+#                submitted_time = ts['submitted_time'],
+#                started_time = ts['started_time'],
+#                finished_time = ts['finished_time'],
+#                mean_elapsed_time = ts['mean_elapsed_time'],
+#                submitted_time_string = ts['submitted_time_string'],
+#                started_time_string = ts['started_time_string'],
+#                finished_time_string = ts['finished_time_string'],
+#                host = task.task_host,
+#                batch_sys_name = ts['batch_sys_name'],
+#                submit_method_id = ts['submit_method_id'],
+#                submit_num = ts['submit_num'],
+#                namespace = task.tdef.namespace_hierarchy,
+#                logfiles = ts['logfiles'],
+#                latest_message = ts['latest_message'],
+#                prerequisites = prereq_list,
+#                outputs = t_outs,
+#                node_depth = len(ancestors_dict[name])-1)
 
         for task in schd.pool.get_rh_tasks():
             ts = task.get_state_summary()
-            ts['state'] = TASK_STATUS_RUNAHEAD
-            task_summary[task.identity] = ts
             name, point_string = TaskID.split(task.identity)
+            # legacy
+            task_summary[task.identity] = ts
             task_states.setdefault(point_string, {})
             task_states[point_string][name] = ts['state']
-            #taskql specific:
+            # graphql new:
+            task_data[name].proxies.append(task.identity)
             task_parents = [TaskID.get(
                 pname, point_string) for pname in parents_dict[name]]
-            j_hosts = []
-            for key in ts['job_hosts']:
-                jhost = QLJobHost(
-                    submit_num = key,
-                    job_host = ts['job_hosts'][key])
-                j_hosts.append(jhost)
-
-            t_outs = QLOutputs()
-            for _, msg, is_completed in task.state.outputs.get_all():
-                if msg == 'submit-failed':
-                    msg = 'submit_failed'
-                setattr(t_outs, msg, is_completed)
 
             prereq_list = []
             for item in task.state.prerequisites_dump():
                 t_prereq = QLPrereq(condition = item[0], message = item[1])
                 prereq_list.append(t_prereq)
 
-            metaql = {}
-            user_metaql = {}
-            for key, value in task.tdef.describe().items():
-                if key in ['title', 'description', 'URL']:
-                    metaql[key] = value
-                else:
-                    user_metaql[key] = value
-            metaql['user_defined'] = user_metaql
-
-            taskql_data[task.identity] = QLTask(
+            taskproxy_data[task.identity] = QLTaskProxy(
                 id = task.identity,
-                name = name,
+                task = name,
                 cycle_point = point_string,
                 state = ts['state'],
-                meta = metaql,
+                jobs = [],
                 parents = task_parents,
                 spawned = ts['spawned'],
-                execution_time_limit = ts['execution_time_limit'],
-                submitted_time = ts['submitted_time'],
-                started_time = ts['started_time'],
-                finished_time = ts['finished_time'],
-                mean_elapsed_time = ts['mean_elapsed_time'],
-                submitted_time_string = ts['submitted_time_string'],
-                started_time_string = ts['started_time_string'],
-                finished_time_string = ts['finished_time_string'],
-                host = task.task_host,
-                batch_sys_name = ts['batch_sys_name'],
-                submit_method_id = ts['submit_method_id'],
-                submit_num = ts['submit_num'],
-                namespace = task.tdef.namespace_hierarchy,
-                logfiles = ts['logfiles'],
+                job_submits = ts['submit_num'],
                 latest_message = ts['latest_message'],
-                job_hosts = j_hosts,
+                namespace = task.tdef.namespace_hierarchy,
                 prerequisites = prereq_list,
-                outputs = t_outs)
+                depth = len(ancestors_dict[name])-1)
 
-        return task_summary, task_states, taskql_data
+        return task_summary, task_states, task_data, taskproxy_data
 
 
     def get_state_summary(self):
@@ -425,14 +423,3 @@ class StateSummaryMgr(object):
 
         return ret
 
-    def get_taskql_data(self):
-        """Return the task summary resource the GraphQL endpoint."""
-        return self.taskql_data
-
-    def get_familyql_data(self):
-        """Return the family summary resource the GraphQL endpoint."""
-        return self.familyql_data
-
-    def get_globalql_data(self):
-        """Return the global summary resource the GraphQL endpoint."""
-        return self.globalql_data
