@@ -30,7 +30,8 @@ from cylc.suite_status import (
 from cylc.task_state import TASK_STATUS_RUNAHEAD
 from cylc.task_state_prop import extract_group_state
 
-from cylc.network.schema import QLFamily, QLOutputs, QLPrereq, QLTask, QLTaskProxy
+from cylc.network.schema import (
+    QLFamily, QLFamilyProxy, QLOutputs, QLPrereq, QLTask, QLTaskProxy)
 
 
 class StateSummaryMgr(object):
@@ -59,6 +60,7 @@ class StateSummaryMgr(object):
         global_summary = {}
         family_summary = {}
         family_data = {}
+        familyproxy_data = {}
         global_data = {}
 
         task_summary, task_states, task_data, taskproxy_data = \
@@ -73,6 +75,24 @@ class StateSummaryMgr(object):
         state_count_totals = {}
         state_count_cycles = {}
 
+        # Family definition data objects creation
+        for name in ancestors_dict.keys():
+            if name in schd.config.taskdefs.keys():
+                continue
+            famcfg = schd.config.cfg['runtime'][name]
+            fmeta = famcfg.get('meta',{}).copy()
+            user_fmeta = {}
+            for key, val in fmeta.items():
+                if key not in ['title', 'description', 'URL']:
+                    user_fmeta[key] = val
+                    fmeta.pop(key)
+            fmeta['user_defined'] = user_fmeta
+            family_data[name] = QLFamily(
+                id = name,
+                name = name,
+                meta = fmeta,
+                depth = len(ancestors_dict[name])-1,
+                proxies = [])
 
         for point_string, c_task_states in task_states.items():
             # For each cycle point, construct a family state tree
@@ -130,21 +150,13 @@ class StateSummaryMgr(object):
                         else:
                             taskdescs.append(
                                 TaskID.get(desc_name, point_string))
-                metaql = {}
-                user_metaql = {}
-                for key, value in famcfg.items():
-                    if key in ['title', 'description', 'URL']:
-                        metaql[key] = value
-                    else:
-                        user_metaql[key] = value
-                metaql['user_defined'] = user_metaql
 
-                family_data[f_id] = QLFamily(
+                family_data[fam].proxies.append(f_id)
+                familyproxy_data[f_id] = QLFamilyProxy(
                     id = f_id,
-                    name = fam,
+                    family = fam,
                     cycle_point = point_string,
                     state = state,
-                    meta = metaql,
                     parents = famparents,
                     task_proxies = taskdescs,
                     families = famdescs,
@@ -250,6 +262,7 @@ class StateSummaryMgr(object):
         self.task_data = task_data
         self.taskproxy_data = taskproxy_data
         self.family_data = family_data
+        self.familyproxy_data = familyproxy_data
         self.global_data = global_data
 
     @staticmethod

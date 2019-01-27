@@ -158,11 +158,33 @@ class QLPrereq(graphene.ObjectType):
     condition = graphene.String()
     message = graphene.String()
 
+class QLTask(graphene.ObjectType):
+    """Task definition, static fields"""
+    id = graphene.ID(required=True)
+    name = graphene.String(required=True)
+    meta = graphene.Field(QLMeta)
+    mean_elapsed_time = graphene.Float()
+    namespace = graphene.List(graphene.String,required=True)
+    depth = graphene.Int()
+    proxies = graphene.List(
+        lambda: QLTaskProxy,
+        description="""Associated cycle point proxies""",
+        id=graphene.ID(default_value=None),
+        exid=graphene.ID(default_value=None),
+        items=graphene.List(graphene.ID, default_value=[]),
+        exitems=graphene.List(graphene.ID, default_value=[]),
+        states=graphene.List(graphene.String, default_value=[]),
+        exstates=graphene.List(graphene.String, default_value=[]),
+        mindepth=graphene.Int(default_value=-1),
+        maxdepth=graphene.Int(default_value=-1),
+        resolver=get_nodes
+        )
+
 class QLTaskProxy(graphene.ObjectType):
     """Task Cycle Specific info"""
     id = graphene.ID(required=True)
     task = graphene.Field(
-        lambda: QLTask,
+        QLTask,
         description="""Task definition""",
         required=True,
         resolver=get_node
@@ -189,7 +211,7 @@ class QLTaskProxy(graphene.ObjectType):
         resolver=get_node
         )
     parents = graphene.List(
-        lambda: QLFamily,
+        lambda: QLFamilyProxy,
         description="""Task parents.""",
         id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
@@ -203,15 +225,40 @@ class QLTaskProxy(graphene.ObjectType):
         )
 
 class QLFamily(graphene.ObjectType):
-    """Family composite."""
+    """Task definition, static fields"""
     id = graphene.ID(required=True)
     name = graphene.String(required=True)
+    meta = graphene.Field(QLMeta)
+    depth = graphene.Int()
+    proxies = graphene.List(
+        lambda: QLFamilyProxy,
+        description="""Associated cycle point proxies""",
+        id=graphene.ID(default_value=None),
+        exid=graphene.ID(default_value=None),
+        items=graphene.List(graphene.ID, default_value=[]),
+        exitems=graphene.List(graphene.ID, default_value=[]),
+        states=graphene.List(graphene.String, default_value=[]),
+        exstates=graphene.List(graphene.String, default_value=[]),
+        mindepth=graphene.Int(default_value=-1),
+        maxdepth=graphene.Int(default_value=-1),
+        resolver=get_nodes
+        )
+
+class QLFamilyProxy(graphene.ObjectType):
+    """Family composite."""
+    id = graphene.ID(required=True)
+    family = graphene.Field(
+        QLFamily,
+        description="""Family definition""",
+        required=True,
+        resolver=get_node
+        )
     cycle_point = graphene.String()
     state = graphene.String()
-    meta = graphene.Field(QLMeta)
+    depth = graphene.Int()
     parents = graphene.List(
-        lambda: QLFamily,
-        description="""Family parents.""",
+        lambda: QLFamilyProxy,
+        description="""Family parent proxies.""",
         id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
         items=graphene.List(graphene.ID, default_value=[]),
@@ -224,8 +271,8 @@ class QLFamily(graphene.ObjectType):
         resolver=get_nodes
         )
     task_proxies = graphene.List(
-        lambda: QLTaskProxy,
-        description="""Desendedant tasks.""",
+        QLTaskProxy,
+        description="""Desendedant task proxies.""",
         id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
         items=graphene.List(graphene.ID, default_value=[]),
@@ -237,8 +284,8 @@ class QLFamily(graphene.ObjectType):
         resolver=get_nodes
         )
     families = graphene.List(
-        lambda: QLFamily,
-        description="""Desendedant families.""",
+        lambda: QLFamilyProxy,
+        description="""Desendedant family proxies.""",
         id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
         items=graphene.List(graphene.ID, default_value=[]),
@@ -249,8 +296,6 @@ class QLFamily(graphene.ObjectType):
         maxdepth=graphene.Int(default_value=-1),
         resolver=get_nodes
         )
-    depth = graphene.Int()
-
 
 class Query(graphene.ObjectType):
     globalInfo = graphene.Field(QLGlobal)
@@ -278,6 +323,16 @@ class Query(graphene.ObjectType):
         )
     families = graphene.List(
         QLFamily,
+        id=graphene.ID(default_value=None),
+        exid=graphene.ID(default_value=None),
+        items=graphene.List(graphene.ID, default_value=[]),
+        exitems=graphene.List(graphene.ID, default_value=[]),
+        mindepth=graphene.Int(default_value=-1),
+        maxdepth=graphene.Int(default_value=-1),
+        resolver=get_nodes
+        )
+    family_proxies = graphene.List(
+        QLFamilyProxy,
         id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
         items=graphene.List(graphene.ID, default_value=[]),

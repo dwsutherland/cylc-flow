@@ -841,7 +841,7 @@ conditions; see `cylc conditions`.
         """Return id tuple for search item"""
         # Head of TaskPool filter_task_proxies
         point_str, name_str, status = self.pool.parse_task_item(item)
-        if not point_str and n_type not in ['QLTask']:
+        if not point_str and n_type not in ['QLTask', 'QLFamily']:
             point_str = "*"
         elif point_str:
             try:
@@ -856,10 +856,12 @@ conditions; see `cylc conditions`.
         """Return true if GraphQL node matches any filter items"""
         if n_type == 'QLTask':
             natts = [None, node.namespace, None]
-        if n_type == 'QLTaskProxy':
+        elif n_type == 'QLTaskProxy':
             natts = [node.cycle_point, node.namespace, node.state]
         elif n_type == 'QLFamily':
-            natts = [node.cycle_point, [node.name], node.state]
+            natts = [None, [node.name], None]
+        elif n_type == 'QLFamilyProxy':
+            natts = [node.cycle_point, [node.family], node.state]
         for point, name, state in items:
             if ((not point or fnmatchcase(natts[0], point)) and
                     any(fnmatchcase(nn, name) for nn in natts[1]) and
@@ -886,6 +888,8 @@ conditions; see `cylc conditions`.
             nodes = self.state_summary_mgr.taskproxy_data
         elif n_type == 'QLFamily':
             nodes = self.state_summary_mgr.family_data
+        elif n_type == 'QLFamilyProxy':
+            nodes = self.state_summary_mgr.familyproxy_data
         result = []
         for node in nodes.values():
             #print(node.proxies)
@@ -910,6 +914,8 @@ conditions; see `cylc conditions`.
             nodes = self.state_summary_mgr.taskproxy_data
         elif n_type == 'QLFamily':
             nodes = self.state_summary_mgr.family_data
+        elif n_type == 'QLFamilyProxy':
+            nodes = self.state_summary_mgr.familyproxy_data
         if args['id']:
             return nodes[args['id']]
         return None
