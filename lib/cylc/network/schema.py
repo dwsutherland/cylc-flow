@@ -21,21 +21,24 @@
 import graphene
 from graphene.types.resolver import dict_resolver
 from graphene.types.generic import GenericScalar
+from graphene.utils.str_converters import to_snake_case
 
 ## Resolvers:
 def get_nodes(root, info, **args):
     """Resolver for returning job, task, family nodes"""
-    field_items = getattr(root, info.field_name, None)
+    field_name = to_snake_case(info.field_name)
+    field_items = getattr(root, field_name, None)
     if field_items:
         args['items'] = field_items
-        if not args['items']:
+    elif field_items == []:
             return []
     schd = info.context.get('schd_obj')
     return schd.info_get_nodes(args, n_type=str(info.return_type.of_type))
 
 def get_node(root, info, **args):
     """Resolver for returning job, task, family nodes"""
-    field_id = getattr(root, info.field_name, None)
+    field_name = to_snake_case(info.field_name)
+    field_id = getattr(root, field_name, None)
     if field_id:
         args['id'] = field_id
     schd = info.context.get('schd_obj')
@@ -243,6 +246,40 @@ class QLFamily(graphene.ObjectType):
         maxdepth=graphene.Int(default_value=-1),
         resolver=get_nodes
         )
+    parents = graphene.List(
+        lambda: QLFamily,
+        description="""Family definition parent.""",
+        id=graphene.ID(default_value=None),
+        exid=graphene.ID(default_value=None),
+        items=graphene.List(graphene.ID, default_value=[]),
+        exitems=graphene.List(graphene.ID, default_value=[]),
+        depth=graphene.Int(default_value=-1),
+        mindepth=graphene.Int(default_value=-1),
+        maxdepth=graphene.Int(default_value=-1),
+        resolver=get_nodes
+        )
+    child_tasks = graphene.List(
+        QLTask,
+        description="""Descendedant definition tasks.""",
+        id=graphene.ID(default_value=None),
+        exid=graphene.ID(default_value=None),
+        items=graphene.List(graphene.ID, default_value=[]),
+        exitems=graphene.List(graphene.ID, default_value=[]),
+        mindepth=graphene.Int(default_value=-1),
+        maxdepth=graphene.Int(default_value=-1),
+        resolver=get_nodes
+        )
+    child_families = graphene.List(
+        lambda: QLFamily,
+        description="""Descendedant desc families.""",
+        id=graphene.ID(default_value=None),
+        exid=graphene.ID(default_value=None),
+        items=graphene.List(graphene.ID, default_value=[]),
+        exitems=graphene.List(graphene.ID, default_value=[]),
+        mindepth=graphene.Int(default_value=-1),
+        maxdepth=graphene.Int(default_value=-1),
+        resolver=get_nodes
+        )
 
 class QLFamilyProxy(graphene.ObjectType):
     """Family composite."""
@@ -270,9 +307,9 @@ class QLFamilyProxy(graphene.ObjectType):
         maxdepth=graphene.Int(default_value=-1),
         resolver=get_nodes
         )
-    task_proxies = graphene.List(
+    child_tasks = graphene.List(
         QLTaskProxy,
-        description="""Desendedant task proxies.""",
+        description="""Descendedant task proxies.""",
         id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
         items=graphene.List(graphene.ID, default_value=[]),
@@ -283,9 +320,9 @@ class QLFamilyProxy(graphene.ObjectType):
         maxdepth=graphene.Int(default_value=-1),
         resolver=get_nodes
         )
-    families = graphene.List(
+    child_families = graphene.List(
         lambda: QLFamilyProxy,
-        description="""Desendedant family proxies.""",
+        description="""Descendedant family proxies.""",
         id=graphene.ID(default_value=None),
         exid=graphene.ID(default_value=None),
         items=graphene.List(graphene.ID, default_value=[]),

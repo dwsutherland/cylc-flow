@@ -52,6 +52,7 @@ class StateSummaryMgr(object):
         self.task_data = {}
         self.taskproxy_data = {}
         self.family_data = {}
+        self.familyproxy_data = {}
         self.global_data = {}
 
     def update(self, schd):
@@ -63,17 +64,17 @@ class StateSummaryMgr(object):
         familyproxy_data = {}
         global_data = {}
 
-        task_summary, task_states, task_data, taskproxy_data = \
-            self._get_tasks_info(schd)
-
         all_states = []
-        ancestors_dict = schd.config.get_first_parent_ancestors()
-        descendants_dict = schd.config.get_first_parent_descendants()
-        parents_dict = schd.config.get_parent_lists()
 
         # Compute state_counts (total, and per cycle).
         state_count_totals = {}
         state_count_cycles = {}
+
+        ancestors_dict = schd.config.get_first_parent_ancestors()
+        descendants_dict = schd.config.get_first_parent_descendants()
+        parents_dict = schd.config.get_parent_lists()
+        task_summary, task_states, task_data, taskproxy_data = (
+            self._get_tasks_info(schd, parents_dict, ancestors_dict))
 
         # Family definition data objects creation
         for name in ancestors_dict.keys():
@@ -92,7 +93,17 @@ class StateSummaryMgr(object):
                 name = name,
                 meta = fmeta,
                 depth = len(ancestors_dict[name])-1,
-                proxies = [])
+                proxies = [],
+                parents = parents_dict[name],
+                child_tasks = [],
+                child_families = [])
+
+        for name, parent_list in parents_dict.items():
+            if parent_list and parent_list[0] in family_data.keys():
+                if name in schd.config.taskdefs.keys():
+                    family_data[parent_list[0]].child_tasks.append(name)
+                else:
+                    family_data[parent_list[0]].child_families.append(name)
 
         for point_string, c_task_states in task_states.items():
             # For each cycle point, construct a family state tree
@@ -142,14 +153,14 @@ class StateSummaryMgr(object):
                     pname, point_string) for pname in parents_dict[fam]]
                 taskdescs = []
                 famdescs = []
-                for desc_name in descendants_dict[fam]:
-                    if parents_dict[desc_name][0] == fam:
-                        if desc_name in c_fam_task_states:
+                for child_name in descendants_dict[fam]:
+                    if parents_dict[child_name][0] == fam:
+                        if child_name in c_fam_task_states:
                             famdescs.append(
-                                TaskID.get(desc_name, point_string))
+                                TaskID.get(child_name, point_string))
                         else:
                             taskdescs.append(
-                                TaskID.get(desc_name, point_string))
+                                TaskID.get(child_name, point_string))
 
                 family_data[fam].proxies.append(f_id)
                 familyproxy_data[f_id] = QLFamilyProxy(
@@ -157,10 +168,10 @@ class StateSummaryMgr(object):
                     family = fam,
                     cycle_point = point_string,
                     state = state,
+                    depth = len(ancestors_dict[fam])-1,
                     parents = famparents,
-                    task_proxies = taskdescs,
-                    families = famdescs,
-                    depth = len(ancestors_dict[fam])-1)
+                    child_tasks = taskdescs,
+                    child_families = famdescs)
 
 
         global_data['suite'] = schd.suite
@@ -266,15 +277,13 @@ class StateSummaryMgr(object):
         self.global_data = global_data
 
     @staticmethod
-    def _get_tasks_info(schd):
+    def _get_tasks_info(schd, parents_dict, ancestors_dict):
         """Retrieve task summary info and states."""
 
         task_summary = {}
         task_states = {}
         task_data = {}
         taskproxy_data = {}
-        ancestors_dict = schd.config.get_first_parent_ancestors()
-        parents_dict = schd.config.get_parent_lists()
 
         # create task definition data objects
         for name, tdef in schd.config.taskdefs.items():
