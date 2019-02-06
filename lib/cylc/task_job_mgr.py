@@ -32,6 +32,7 @@ import os
 from shutil import rmtree
 from time import time
 import traceback
+from copy import deepcopy
 
 from parsec.util import pdeepcopy, poverride
 
@@ -82,11 +83,12 @@ class TaskJobManager(object):
     KEY_EXECUTE_TIME_LIMIT = TaskEventsManager.KEY_EXECUTE_TIME_LIMIT
 
     def __init__(self, suite, proc_pool, suite_db_mgr, suite_srv_files_mgr,
-                 task_events_mgr):
+                 task_events_mgr, job_pool):
         self.suite = suite
         self.proc_pool = proc_pool
         self.suite_db_mgr = suite_db_mgr
         self.task_events_mgr = task_events_mgr
+        self.job_pool = job_pool
         self.job_file_writer = JobFileWriter()
         self.batch_sys_mgr = self.job_file_writer.batch_sys_mgr
         self.suite_srv_files_mgr = suite_srv_files_mgr
@@ -791,6 +793,10 @@ class TaskJobManager(object):
             itask.set_summary_message('job file written (edit/dry-run)')
             LOG.debug('[%s] -%s', itask, itask.summary['latest_message'])
 
+        job_config = deepcopy(job_conf)
+        job_config['logfiles'] = deepcopy(itask.summary['logfiles'])
+        itask.jobs.append(job_config['job_d'])
+        self.job_pool.insert_job(job_config)
         # Return value used by "cylc submit" and "cylc jobscript":
         return itask
 

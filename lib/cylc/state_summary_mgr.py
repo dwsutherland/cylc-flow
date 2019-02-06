@@ -327,13 +327,20 @@ class StateSummaryMgr(object):
                 t_prereq = QLPrereq(condition = item[0], message = item[1])
                 prereq_list.append(t_prereq)
 
+            t_outs = QLOutputs()
+            for _, msg, is_completed in task.state.outputs.get_all():
+                if msg == 'submit-failed':
+                    msg = 'submit_failed'
+                setattr(t_outs, msg, is_completed)
+
             taskproxy_data[task.identity] = QLTaskProxy(
                 id = task.identity,
                 task = name,
                 cycle_point = point_string,
                 state = ts['state'],
-                jobs = [],
+                jobs = task.jobs,
                 parents = task_parents,
+                outputs = t_outs,
                 namespace = task.tdef.namespace_hierarchy,
                 spawned = ts['spawned'],
                 job_submits = ts['submit_num'],
@@ -341,11 +348,6 @@ class StateSummaryMgr(object):
                 prerequisites = prereq_list,
                 depth = len(ancestors_dict[name])-1)
 
-#            t_outs = QLOutputs()
-#            for _, msg, is_completed in task.state.outputs.get_all():
-#                if msg == 'submit-failed':
-#                    msg = 'submit_failed'
-#                setattr(t_outs, msg, is_completed)
 
 #            taskproxy_data[task.identity] = QLTask(
 #                id = task.identity,
@@ -392,16 +394,23 @@ class StateSummaryMgr(object):
                 t_prereq = QLPrereq(condition = item[0], message = item[1])
                 prereq_list.append(t_prereq)
 
+            t_outs = QLOutputs()
+            for _, msg, is_completed in task.state.outputs.get_all():
+                if msg == 'submit-failed':
+                    msg = 'submit_failed'
+                setattr(t_outs, msg, is_completed)
+
             taskproxy_data[task.identity] = QLTaskProxy(
                 id = task.identity,
                 task = name,
                 cycle_point = point_string,
                 state = ts['state'],
-                jobs = [],
+                jobs = task.jobs,
                 parents = task_parents,
                 spawned = ts['spawned'],
                 job_submits = ts['submit_num'],
                 latest_message = ts['latest_message'],
+                outputs = t_outs,
                 namespace = task.tdef.namespace_hierarchy,
                 prerequisites = prereq_list,
                 depth = len(ancestors_dict[name])-1)

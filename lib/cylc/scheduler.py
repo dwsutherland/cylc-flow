@@ -66,6 +66,7 @@ from cylc.suite_status import (
 from cylc.taskdef import TaskDef
 from cylc.task_events_mgr import TaskEventsManager
 from cylc.task_id import TaskID
+from cylc.job_pool import JobPool
 from cylc.task_job_logs import JOB_LOG_JOB, get_task_job_log
 from cylc.task_job_mgr import TaskJobManager
 from cylc.task_pool import TaskPool
@@ -193,6 +194,7 @@ class Scheduler(object):
         self.state_summary_mgr = None
         self.pool = None
         self.proc_pool = None
+        self.job_pool = None
         self.task_job_mgr = None
         self.task_events_mgr = None
         self.suite_event_handler = None
@@ -367,12 +369,13 @@ conditions; see `cylc conditions`.
         self.message_queue = Queue()
         self.ext_trigger_queue = Queue()
         self.suite_event_handler = SuiteEventHandler(self.proc_pool)
+        self.job_pool = JobPool()
         self.task_events_mgr = TaskEventsManager(
             self.suite, self.proc_pool, self.suite_db_mgr, self.broadcast_mgr)
         self.task_events_mgr.uuid_str = self.uuid_str
         self.task_job_mgr = TaskJobManager(
             self.suite, self.proc_pool, self.suite_db_mgr,
-            self.suite_srv_files_mgr, self.task_events_mgr)
+            self.suite_srv_files_mgr, self.task_events_mgr, self.job_pool)
         self.task_job_mgr.task_remote_mgr.uuid_str = self.uuid_str
 
         if self.is_restart:
@@ -448,7 +451,8 @@ conditions; see `cylc conditions`.
 
         self.pool = TaskPool(
             self.config, self.final_point, self.suite_db_mgr,
-            self.task_events_mgr, self.proc_pool, self.xtrigger_mgr)
+            self.task_events_mgr, self.proc_pool, self.xtrigger_mgr,
+            self.job_pool)
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
         if self.is_restart:
@@ -839,8 +843,13 @@ conditions; see `cylc conditions`.
 
     def _node_id_parse(self, item, n_type):
         """Return id tuple for search item"""
-        # Head of TaskPool filter_task_proxies
-        point_str, name_str, status = self.pool.parse_task_item(item)
+        # job/task/family item arg parsing
+        if n_type in ['QLJob']:
+            point_str, name_str, submit_num, status = (
+                self.job_pool.parse_job_item(item))
+        else:
+            point_str, name_str, status = self.pool.parse_task_item(item)
+            submit_num = None
         if not point_str and n_type not in ['QLTask', 'QLFamily']:
             point_str = "*"
         elif point_str:
@@ -849,7 +858,7 @@ conditions; see `cylc conditions`.
             except ValueError:
                 # n_point may be a glob
                 pass
-        return (point_str, name_str, status)
+        return (point_str, name_str, submit_num, status)
 
     @staticmethod
     def _node_filter(node, items, n_type):
@@ -862,10 +871,14 @@ conditions; see `cylc conditions`.
             natts = [None, [node.name], None]
         elif n_type == 'QLFamilyProxy':
             natts = [node.cycle_point, [node.family], node.state]
-        for point, name, state in items:
+        elif n_type == 'QLJob':
+            n_point, n_name, n_subnum = node.id.rsplit("/")
+            natts = [n_point, [n_name], node.state, n_subnum]
+        for point, name, submit_num, state in items:
             if ((not point or fnmatchcase(natts[0], point)) and
                     any(fnmatchcase(nn, name) for nn in natts[1]) and
-                    (not state or natts[2] == state)):
+                    (not state or natts[2] == state) and
+                    (not submit_num or fnmatchcase(natts[3],submit_num))):
                 return True
         return False
 
@@ -890,15 +903,17 @@ conditions; see `cylc conditions`.
             nodes = self.state_summary_mgr.family_data
         elif n_type == 'QLFamilyProxy':
             nodes = self.state_summary_mgr.familyproxy_data
+        elif n_type == 'QLJob':
+            nodes = self.job_pool.pool
         result = []
         for node in nodes.values():
             #print(node.proxies)
             if ((not args.get('states') or node.state in args['states']) and
                     not (args.get('exstates') and
                         node.state in args['exstates']) and
-                    (args['mindepth'] < 0 or
+                    (args.get('mindepth', -1) < 0 or
                         node.depth >= args['mindepth']) and
-                    (args['maxdepth'] < 0 or
+                    (args.get('maxdepth', -1) < 0 or
                         node.depth <= args['maxdepth']) and
                     (not items or self._node_filter(node, items, n_type)) and
                     not (exitems and
@@ -916,6 +931,8 @@ conditions; see `cylc conditions`.
             nodes = self.state_summary_mgr.family_data
         elif n_type == 'QLFamilyProxy':
             nodes = self.state_summary_mgr.familyproxy_data
+        elif n_type == 'QLJob':
+            nodes = self.job_pool.pool
         if args['id']:
             return nodes[args['id']]
         return None

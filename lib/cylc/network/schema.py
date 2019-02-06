@@ -149,10 +149,10 @@ class QLJob(graphene.ObjectType):
     finished_time_string = graphene.String()
     execution_time_limit = graphene.Float()
     logfiles = graphene.List(graphene.String)
-    outputs = graphene.Field(QLOutputs)
-    task_proxy = graphene.List(
+    task = graphene.Field(
         lambda: QLTaskProxy,
         description="""Associated Task Proxy""",
+        required=True,
         resolver=get_node
         )
 
@@ -199,6 +199,7 @@ class QLTaskProxy(graphene.ObjectType):
     prerequisites = graphene.List(QLPrereq)
     job_submits = graphene.Int()
     namespace = graphene.List(graphene.String,required=True)
+    outputs = graphene.Field(QLOutputs)
     depth = graphene.Int()
     jobs = graphene.List(
         QLJob,
@@ -209,9 +210,7 @@ class QLTaskProxy(graphene.ObjectType):
         exitems=graphene.List(graphene.ID, default_value=[]),
         states=graphene.List(graphene.String, default_value=[]),
         exstates=graphene.List(graphene.String, default_value=[]),
-        mindepth=graphene.Int(default_value=-1),
-        maxdepth=graphene.Int(default_value=-1),
-        resolver=get_node
+        resolver=get_nodes
         )
     parents = graphene.List(
         lambda: QLFamilyProxy,
@@ -336,6 +335,16 @@ class QLFamilyProxy(graphene.ObjectType):
 
 class Query(graphene.ObjectType):
     globalInfo = graphene.Field(QLGlobal)
+    jobs = graphene.List(
+        QLJob,
+        id=graphene.ID(default_value=None),
+        exid=graphene.ID(default_value=None),
+        items=graphene.List(graphene.ID, default_value=[]),
+        exitems=graphene.List(graphene.ID, default_value=[]),
+        states=graphene.List(graphene.String, default_value=[]),
+        exstates=graphene.List(graphene.String, default_value=[]),
+        resolver=get_nodes
+        )
     tasks = graphene.List(
         QLTask,
         id=graphene.ID(default_value=None),
