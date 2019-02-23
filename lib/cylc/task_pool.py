@@ -1135,6 +1135,9 @@ class TaskPool(object):
                     del itask.summary['job_hosts'][itask.submit_num]
                 except KeyError:
                     pass
+                job_d = get_task_job_id(
+                    itask.point, itask.tdef.name, itask.submit_num)
+                self.job_pool.remove_job(job_d)
                 itask.submit_num -= 1
                 itask.summary['submit_num'] = itask.submit_num
                 itask.local_job_file_path = None

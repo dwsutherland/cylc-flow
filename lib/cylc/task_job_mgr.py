@@ -42,7 +42,7 @@ from cylc.cfgspec.glbl_cfg import glbl_cfg
 from cylc.hostuserutil import get_host, is_remote_host, is_remote_user
 from cylc.job_file import JobFileWriter
 from cylc.task_job_logs import (
-    JOB_LOG_JOB, get_task_job_log, get_task_job_job_log,
+    JOB_LOG_OPTS, JOB_LOG_JOB, get_task_job_log, get_task_job_job_log,
     get_task_job_activity_log, get_task_job_id, NN)
 from cylc.mkdir_p import mkdir_p
 from cylc.subprocpool import SuiteProcPool
@@ -719,8 +719,11 @@ class TaskJobManager(object):
         if ctx.ret_code == SuiteProcPool.RET_CODE_SUITE_STOPPING:
             return
 
+        job_d = get_task_job_id(
+            itask.point, itask.tdef.name, itask.submit_num)
         try:
             itask.summary['submit_method_id'] = items[3]
+            self.job_pool.set_job_attr(job_d, 'submit_method_id', items[3])
         except IndexError:
             itask.summary['submit_method_id'] = None
         if itask.summary['submit_method_id'] == "None":
@@ -729,6 +732,7 @@ class TaskJobManager(object):
             self.task_events_mgr.process_message(
                 itask, INFO, TASK_OUTPUT_SUBMITTED, ctx.timestamp)
         else:
+            self.job_pool.set_job_attr(job_d, 'submit_method_id', None)
             self.task_events_mgr.process_message(
                 itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED,
                 ctx.timestamp)
@@ -795,6 +799,8 @@ class TaskJobManager(object):
 
         job_config = deepcopy(job_conf)
         job_config['logfiles'] = deepcopy(itask.summary['logfiles'])
+        job_config['job_log_dir'] = get_task_job_log(
+                suite, itask.point, itask.tdef.name, itask.submit_num)
         itask.jobs.append(job_config['job_d'])
         self.job_pool.insert_job(job_config)
         # Return value used by "cylc submit" and "cylc jobscript":

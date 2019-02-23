@@ -371,7 +371,8 @@ conditions; see `cylc conditions`.
         self.suite_event_handler = SuiteEventHandler(self.proc_pool)
         self.job_pool = JobPool()
         self.task_events_mgr = TaskEventsManager(
-            self.suite, self.proc_pool, self.suite_db_mgr, self.broadcast_mgr)
+            self.suite, self.proc_pool, self.suite_db_mgr, self.broadcast_mgr,
+            self.job_pool)
         self.task_events_mgr.uuid_str = self.uuid_str
         self.task_job_mgr = TaskJobManager(
             self.suite, self.proc_pool, self.suite_db_mgr,

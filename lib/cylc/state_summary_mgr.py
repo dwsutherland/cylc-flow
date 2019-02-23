@@ -29,6 +29,7 @@ from cylc.suite_status import (
     SUITE_STATUS_RUNNING_TO_HOLD)
 from cylc.task_state import TASK_STATUS_RUNAHEAD
 from cylc.task_state_prop import extract_group_state
+from cylc.task_job_logs import JOB_LOG_OPTS
 
 from cylc.network.schema import (
     QLFamily, QLFamilyProxy, QLOutputs, QLPrereq, QLTask, QLTaskProxy)
@@ -234,6 +235,7 @@ class StateSummaryMgr(object):
             schd.config.ns_defn_order)
         global_data['reloading'] = schd.pool.do_reload
         global_data['state_totals'] = state_count_totals
+        global_data['job_log_names'] = [n for n in JOB_LOG_OPTS.values()]
 
         # Extract suite and task URLs from config.
         global_summary['suite_urls'] = dict(

@@ -92,6 +92,7 @@ class QLGlobal(graphene.ObjectType):
     reloading = graphene.Boolean()
     time_zone_info = graphene.Field(QLTimeZone)
     last_updated = graphene.Float()
+    job_log_names = graphene.List(graphene.String)
     status = graphene.String()
     state_totals = graphene.Field(QLStateTotals)
     states = graphene.List(graphene.String)
@@ -136,25 +137,41 @@ class QLOutputs(graphene.ObjectType):
 class QLJob(graphene.ObjectType):
     """Jobs."""
     id = graphene.ID(required=True)
-    state = graphene.String()
+    batch_sys_name = graphene.String()
+    batch_sys_conf = GenericScalar(default_value={})
+    directives = GenericScalar(default_value={})
+    environment = GenericScalar(default_value={})
+    env_script = graphene.String()
+    err_script = graphene.String()
+    exit_script = graphene.String()
+    extra_logs = graphene.List(graphene.String)
+    execution_time_limit = graphene.Float()
+    finished_time = graphene.Float()
+    finished_time_string = graphene.String()
     host = graphene.String()
+    init_script = graphene.String()
+    job_log_dir = graphene.String()
+    owner = graphene.String()
+    param_env_tmpl = GenericScalar(default_value={})
+    param_var = GenericScalar(default_value={})
+    post_script = graphene.String()
+    pre_script = graphene.String()
+    script = graphene.String()
+    shell = graphene.String()
+    started_time = graphene.Float()
+    started_time_string = graphene.String()
+    state = graphene.String()
     submit_num = graphene.Int()
     submit_method_id = graphene.ID()
-    batch_sys_name = graphene.String()
     submitted_time = graphene.Float()
-    started_time = graphene.Float()
-    finished_time = graphene.Float()
     submitted_time_string = graphene.String()
-    started_time_string = graphene.String()
-    finished_time_string = graphene.String()
-    execution_time_limit = graphene.Float()
-    logfiles = graphene.List(graphene.String)
-    task = graphene.Field(
+    task_proxy = graphene.Field(
         lambda: QLTaskProxy,
         description="""Associated Task Proxy""",
         required=True,
         resolver=get_node
         )
+    work_sub_dir = graphene.String()
 
 class QLPrereq(graphene.ObjectType):
     """Task prerequisite."""

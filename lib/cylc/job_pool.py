@@ -29,7 +29,8 @@ from cylc.task_state import (
     TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED)
-from cylc.wallclock import get_current_time_string
+from cylc.wallclock import (
+    get_current_time_string, get_unix_time_from_time_string as str2time)
 from cylc.network.schema import QLJob
 
 JOB_STATUSES_ALL = [
@@ -51,29 +52,69 @@ class JobPool(object):
         self.pool = {}
 
     def insert_job(self, job_conf):
+        """Insert job into pool."""
         self.pool[job_conf['job_d']] = QLJob(
             id = job_conf['job_d'],
-            host = job_conf['host'],
-            submit_num = job_conf['submit_num'],
             batch_sys_name = job_conf['batch_system_name'],
+            batch_sys_conf = job_conf['batch_system_conf'],
+            directives = job_conf['directives'],
+            environment = job_conf['environment'],
+            env_script = job_conf['env-script'],
+            err_script = job_conf['err-script'],
+            exit_script = job_conf['exit-script'],
+            extra_logs = job_conf['logfiles'],
             execution_time_limit = job_conf['execution_time_limit'],
-            logfiles = job_conf['logfiles'],
-            task = job_conf['task_id'])
+            host = job_conf['host'],
+            init_script = job_conf['init-script'],
+            job_log_dir = job_conf['job_log_dir'],
+            owner = job_conf['owner'],
+            param_env_tmpl = job_conf['param_env_tmpl'],
+            param_var = job_conf['param_var'],
+            post_script = job_conf['post-script'],
+            pre_script = job_conf['pre-script'],
+            script = job_conf['script'],
+            shell = job_conf['shell'],
+            work_sub_dir = job_conf['work_d'],
+            submit_num = job_conf['submit_num'],
+            task_proxy = job_conf['task_id'])
 
-    def remove_job(self, job_id):
-        if job_id in self.pool:
-            del self.pool[job_id]
+    def remove_job(self, job_d):
+        """Remove job from pool."""
+        try:
+            del self.pool[job_d]
+        except KeyError:
+            pass
 
     def remove_task_jobs(self, task_id):
-        for job_id, job_obj in self.pool.items():
-            if job_obj.task == task_id:
-                del self.pool[job_id]
+        """removed all jobs associated with a task from the pool."""
+        for job_d, job_obj in self.pool.items():
+            if job_obj.task_proxy == task_id:
+                del self.pool[job_d]
 
-    def set_job_state(self, itask, status):
-        job_id = get_task_job_id(
-            itask.point, itask.tdef.name, itask.submit_num)
-        if job_id in self.jobs:
-            self.jobs[job_id].state = status
+    def set_job_attr(self, job_d, attr_key, attr_val):
+        """Set job attribute."""
+        setattr(self.pool[job_d], attr_key, attr_val)
+
+    def set_job_state(self, job_d, status):
+        """Set job state."""
+        if status in JOB_STATUSES_ALL:
+            try:
+                self.pool[job_d].state = status
+            except KeyError:
+                pass
+
+    def set_job_time(self, job_d, event_key, time_str=None):
+        """Set an event time in job pool object.
+
+        Set values of both event_key + "_time" and event_key + "_time_string".
+        """
+        if time_str is None:
+            setattr(self.pool[job_d], event_key + '_time', None)
+        else:
+            setattr(
+                self.pool[job_d], event_key + '_time',
+                float(str2time(time_str)))
+        setattr(self.pool[job_d], event_key + '_time_string', time_str)
 
     @staticmethod
     def parse_job_item(item):
