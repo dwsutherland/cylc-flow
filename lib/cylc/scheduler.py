@@ -935,7 +935,7 @@ conditions; see `cylc conditions`.
         elif n_type == 'QLJob':
             nodes = self.job_pool.pool
         if args['id']:
-            return nodes[args['id']]
+            return nodes.get(args['id'], None)
         return None
 
     def info_get_global_data(self):

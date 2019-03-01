@@ -18,6 +18,7 @@
 """Manage suite state summary for client, e.g. GUI."""
 
 from time import time
+
 import json
 
 from cylc.task_id import TaskID
@@ -32,7 +33,7 @@ from cylc.task_state_prop import extract_group_state
 from cylc.task_job_logs import JOB_LOG_OPTS
 
 from cylc.network.schema import (
-    QLFamily, QLFamilyProxy, QLOutputs, QLPrereq, QLTask, QLTaskProxy)
+    QLFamily, QLFamilyProxy, QLOutputs, QLTask, QLTaskProxy)
 
 
 class StateSummaryMgr(object):
@@ -235,6 +236,7 @@ class StateSummaryMgr(object):
             schd.config.ns_defn_order)
         global_data['reloading'] = schd.pool.do_reload
         global_data['state_totals'] = state_count_totals
+        global_data['suite_log_dir'] = schd.suite_log_dir
         global_data['job_log_names'] = [n for n in JOB_LOG_OPTS.values()]
 
         # Extract suite and task URLs from config.
@@ -325,9 +327,9 @@ class StateSummaryMgr(object):
                 pname, point_string) for pname in parents_dict[name]]
 
             prereq_list = []
-            for item in task.state.prerequisites_dump():
-                t_prereq = QLPrereq(condition = item[0], message = item[1])
-                prereq_list.append(t_prereq)
+            for prereq in task.state.prerequisites:
+                # GraphQL objects populated within
+                prereq_list.append(prereq.api_dump())
 
             t_outs = QLOutputs()
             for _, msg, is_completed in task.state.outputs.get_all():
@@ -350,35 +352,6 @@ class StateSummaryMgr(object):
                 prerequisites = prereq_list,
                 depth = len(ancestors_dict[name])-1)
 
-
-#            taskproxy_data[task.identity] = QLTask(
-#                id = task.identity,
-#                name = name,
-#                cycle_point = point_string,
-#                state = ts['state'],
-#                task = metaql,
-#                jobs = [],
-#                parents = task_parents,
-#                spawned = ts['spawned'],
-#                execution_time_limit = ts['execution_time_limit'],
-#                submitted_time = ts['submitted_time'],
-#                started_time = ts['started_time'],
-#                finished_time = ts['finished_time'],
-#                mean_elapsed_time = ts['mean_elapsed_time'],
-#                submitted_time_string = ts['submitted_time_string'],
-#                started_time_string = ts['started_time_string'],
-#                finished_time_string = ts['finished_time_string'],
-#                host = task.task_host,
-#                batch_sys_name = ts['batch_sys_name'],
-#                submit_method_id = ts['submit_method_id'],
-#                submit_num = ts['submit_num'],
-#                namespace = task.tdef.namespace_hierarchy,
-#                logfiles = ts['logfiles'],
-#                latest_message = ts['latest_message'],
-#                prerequisites = prereq_list,
-#                outputs = t_outs,
-#                node_depth = len(ancestors_dict[name])-1)
-
         for task in schd.pool.get_rh_tasks():
             ts = task.get_state_summary()
             name, point_string = TaskID.split(task.identity)
@@ -392,9 +365,9 @@ class StateSummaryMgr(object):
                 pname, point_string) for pname in parents_dict[name]]
 
             prereq_list = []
-            for item in task.state.prerequisites_dump():
-                t_prereq = QLPrereq(condition = item[0], message = item[1])
-                prereq_list.append(t_prereq)
+            for prereq in task.state.prerequisites:
+                # GraphQL objects populated within
+                prereq_list.append(prereq.api_dump())
 
             t_outs = QLOutputs()
             for _, msg, is_completed in task.state.outputs.get_all():

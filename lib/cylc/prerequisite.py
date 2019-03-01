@@ -22,6 +22,7 @@ import math
 
 from cylc.conditional_simplifier import ConditionalSimplifier
 from cylc.cycling.loader import get_point
+from cylc.network.schema import QLPrerequisite, QLCondition
 
 
 class TriggerExpressionError(ValueError):
@@ -227,6 +228,40 @@ class Prerequisite(object):
                 res.append([self.MESSAGE_TEMPLATE % message, val])
         # (Else trigger wiped out by pre-initial simplification.)
         return res
+
+    def api_dump(self):
+        """ Return list of populated GraphQL data objects.
+        """
+        if self.conditional_expression:
+            temp = self.get_raw_conditional_expression()
+            temp = temp.replace('|', ' | ')
+            temp = temp.replace('&', ' & ')
+        else:
+            for s_msg, val in self.satisfied.items():
+                temp = self.MESSAGE_TEMPLATE % s_msg
+        conds = []
+        num_length = int(math.ceil(float(len(self.satisfied)) / float(10)))
+        for ind, message_tuple in enumerate(sorted(self.satisfied)):
+            t_id = '%s.%s' % message_tuple[0:2]
+            char = 'c%.{0}d'.format(num_length) % ind
+            c_msg = self.MESSAGE_TEMPLATE % message_tuple
+            c_val = self.satisfied[message_tuple]
+            if c_val is False:
+                c_val = "not satisfied"
+            cond = QLCondition(
+                task_id = t_id,
+                task_proxy = t_id,
+                expr_alias = char,
+                req_state = message_tuple[2],
+                satisfied = bool(c_val),
+                message = c_val)
+            conds.append(cond)
+            temp = temp.replace(c_msg, char)
+        return QLPrerequisite(
+            expression = temp,
+            conditions = conds,
+            cycle_points = self.target_point_strings,
+            satisfied = self.is_satisfied())
 
     def set_satisfied(self):
         """Force this prerequisite into the satisfied state.

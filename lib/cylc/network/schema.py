@@ -23,6 +23,7 @@ from graphene.types.resolver import dict_resolver
 from graphene.types.generic import GenericScalar
 from graphene.utils.str_converters import to_snake_case
 
+### Query Related ###
 ## Resolvers:
 def get_nodes(root, info, **args):
     """Resolver for returning job, task, family nodes"""
@@ -31,7 +32,7 @@ def get_nodes(root, info, **args):
     if field_items:
         args['items'] = field_items
     elif field_items == []:
-            return []
+        return []
     schd = info.context.get('schd_obj')
     return schd.info_get_nodes(args, n_type=str(info.return_type.of_type))
 
@@ -42,7 +43,7 @@ def get_node(root, info, **args):
     if field_id:
         args['id'] = field_id
     schd = info.context.get('schd_obj')
-    return schd.info_get_node(args, n_type=str(info.return_type.of_type))
+    return schd.info_get_node(args, n_type=str(info.return_type))
 
 ## Types:
 class QLMeta(graphene.ObjectType):
@@ -85,22 +86,23 @@ class QLGlobal(graphene.ObjectType):
     """Global suite info."""
     class Meta:
         default_resolver = dict_resolver
-    suite = graphene.String(required=True)
-    owner = graphene.String()
     host = graphene.String()
-    meta = graphene.Field(QLMeta)
-    reloading = graphene.Boolean()
-    time_zone_info = graphene.Field(QLTimeZone)
-    last_updated = graphene.Float()
     job_log_names = graphene.List(graphene.String)
-    status = graphene.String()
-    state_totals = graphene.Field(QLStateTotals)
-    states = graphene.List(graphene.String)
-    run_mode = graphene.String()
+    last_updated = graphene.Float()
+    meta = graphene.Field(QLMeta)
     namespace_definition_order = graphene.List(graphene.String)
     newest_runahead_cycle_point = graphene.String()
     newest_cycle_point = graphene.String()
     oldest_cycle_point = graphene.String()
+    owner = graphene.String()
+    reloading = graphene.Boolean()
+    run_mode = graphene.String()
+    state_totals = graphene.Field(QLStateTotals)
+    states = graphene.List(graphene.String)
+    status = graphene.String()
+    suite = graphene.String(required=True)
+    suite_log_dir = graphene.String()
+    time_zone_info = graphene.Field(QLTimeZone)
     tree_depth = graphene.Int()
 
 class QLTask(graphene.ObjectType):
@@ -173,11 +175,6 @@ class QLJob(graphene.ObjectType):
         )
     work_sub_dir = graphene.String()
 
-class QLPrereq(graphene.ObjectType):
-    """Task prerequisite."""
-    condition = graphene.String()
-    message = graphene.String()
-
 class QLTask(graphene.ObjectType):
     """Task definition, static fields"""
     id = graphene.ID(required=True)
@@ -200,6 +197,29 @@ class QLTask(graphene.ObjectType):
         resolver=get_nodes
         )
 
+class QLCondition(graphene.ObjectType):
+    """Prerequisite conditions."""
+    task_id = graphene.ID(required=True)
+    task_proxy = graphene.Field(
+        lambda: QLTaskProxy,
+        description="""Associated Task Proxy""",
+        resolver=get_node
+        )
+    expr_alias = graphene.String()
+    req_state = graphene.String()
+    satisfied = graphene.Boolean()
+    message = graphene.String()
+
+class QLPrerequisite(graphene.ObjectType):
+    """Task prerequisite."""
+    expression = graphene.String()
+    conditions = graphene.List(
+        QLCondition,
+        description="""Condition monomers of a task prerequisites."""
+        )
+    cycle_points = graphene.List(graphene.String)
+    satisfied = graphene.Boolean()
+
 class QLTaskProxy(graphene.ObjectType):
     """Task Cycle Specific info"""
     id = graphene.ID(required=True)
@@ -213,7 +233,7 @@ class QLTaskProxy(graphene.ObjectType):
     state = graphene.String()
     spawned = graphene.Boolean()
     latest_message = graphene.String()
-    prerequisites = graphene.List(QLPrereq)
+    prerequisites = graphene.List(QLPrerequisite)
     job_submits = graphene.Int()
     namespace = graphene.List(graphene.String,required=True)
     outputs = graphene.Field(QLOutputs)
@@ -411,6 +431,36 @@ class Query(graphene.ObjectType):
         schd = info.context.get('schd_obj')
         return schd.info_get_global_data()
 
+### Mutation Related ###
+## Mutations
+class StopSuite(graphene.Mutation):
+    """Stop the suite."""
+    class Arguments:
+        stop_type = graphene.String(required=True)
+        stop_item = graphene.String()
+        stop_args = graphene.List(graphene.String)
 
-schema = graphene.Schema(query=Query)
+    command_queued = graphene.Boolean()
+
+    def mutate(self, info, stop_type, stop_item=None, stop_args=[]):
+        if stop_type in ['now']:
+            stop_cmd = 'stop_now'
+        else:
+            stop_cmd = 'set_stop_' + stop_type
+        action = {}
+        for key in stop_args:
+            action[key] = True
+        item = ()
+        if stop_item:
+            item = (stop_item,)
+        schd = info.context.get('schd_obj')
+        schd.command_queue.put((stop_cmd,item,action))
+        return StopSuite(command_queued=True)
+
+
+class Mutation(graphene.ObjectType):
+    stop_suite = StopSuite.Field()
+
+
+schema = graphene.Schema(query=Query, mutation=Mutation)
 
