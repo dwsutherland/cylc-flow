@@ -247,7 +247,7 @@ class Prerequisite(object):
             c_msg = self.MESSAGE_TEMPLATE % message_tuple
             c_val = self.satisfied[message_tuple]
             if c_val is False:
-                c_val = "not satisfied"
+                c_val = "unsatisfied"
             cond = QLCondition(
                 task_id = t_id,
                 task_proxy = t_id,

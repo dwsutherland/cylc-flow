@@ -34,7 +34,8 @@ def get_nodes(root, info, **args):
     elif field_items == []:
         return []
     schd = info.context.get('schd_obj')
-    return schd.info_get_nodes(args, n_type=str(info.return_type.of_type))
+    node_type = str(info.return_type.of_type).replace('!','')
+    return schd.info_get_nodes(args, n_type=node_type)
 
 def get_node(root, info, **args):
     """Resolver for returning job, task, family nodes"""
@@ -43,7 +44,8 @@ def get_node(root, info, **args):
     if field_id:
         args['id'] = field_id
     schd = info.context.get('schd_obj')
-    return schd.info_get_node(args, n_type=str(info.return_type))
+    node_type = str(info.return_type).replace('!','')
+    return schd.info_get_node(args, n_type=node_type)
 
 ## Types:
 class QLMeta(graphene.ObjectType):
