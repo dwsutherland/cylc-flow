@@ -723,7 +723,7 @@ class TaskJobManager(object):
             itask.point, itask.tdef.name, itask.submit_num)
         try:
             itask.summary['submit_method_id'] = items[3]
-            self.job_pool.set_job_attr(job_d, 'submit_method_id', items[3])
+            self.job_pool.set_job_attr(job_d, 'batch_sys_job_id', items[3])
         except IndexError:
             itask.summary['submit_method_id'] = None
         if itask.summary['submit_method_id'] == "None":
@@ -732,7 +732,7 @@ class TaskJobManager(object):
             self.task_events_mgr.process_message(
                 itask, INFO, TASK_OUTPUT_SUBMITTED, ctx.timestamp)
         else:
-            self.job_pool.set_job_attr(job_d, 'submit_method_id', None)
+            self.job_pool.set_job_attr(job_d, 'batch_sys_job_id', None)
             self.task_events_mgr.process_message(
                 itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED,
                 ctx.timestamp)

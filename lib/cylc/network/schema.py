@@ -141,6 +141,7 @@ class QLOutputs(graphene.ObjectType):
 class QLJob(graphene.ObjectType):
     """Jobs."""
     id = graphene.ID(required=True)
+    batch_sys_job_id = graphene.ID()
     batch_sys_name = graphene.String()
     batch_sys_conf = GenericScalar(default_value={})
     directives = GenericScalar(default_value={})
@@ -166,7 +167,6 @@ class QLJob(graphene.ObjectType):
     started_time_string = graphene.String()
     state = graphene.String()
     submit_num = graphene.Int()
-    submit_method_id = graphene.ID()
     submitted_time = graphene.Float()
     submitted_time_string = graphene.String()
     task_proxy = graphene.Field(

@@ -714,7 +714,7 @@ class TaskEventsManager(object):
         job_d = get_task_job_id(
                     itask.point, itask.tdef.name, itask.submit_num)
         itask.summary['submit_method_id'] = None
-        self.job_pool.set_job_attr(job_d, 'submit_method_id', None)
+        self.job_pool.set_job_attr(job_d, 'batch_sys_job_id', None)
         if (TASK_STATUS_SUBMIT_RETRYING not in itask.try_timers or
                 itask.try_timers[TASK_STATUS_SUBMIT_RETRYING].next() is None):
             # No submission retry lined up: definitive failure.
