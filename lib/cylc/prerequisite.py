@@ -257,11 +257,13 @@ class Prerequisite(object):
                 message = c_val)
             conds.append(cond)
             temp = temp.replace(c_msg, char)
-        return QLPrerequisite(
-            expression = temp,
-            conditions = conds,
-            cycle_points = self.target_point_strings,
-            satisfied = self.is_satisfied())
+        if self.satisfied:
+            return QLPrerequisite(
+                expression = temp,
+                conditions = conds,
+                cycle_points = self.target_point_strings,
+                satisfied = self.is_satisfied())
+        return None
 
     def set_satisfied(self):
         """Force this prerequisite into the satisfied state.

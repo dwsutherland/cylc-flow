@@ -225,21 +225,16 @@ class QLPrerequisite(graphene.ObjectType):
 class QLTaskProxy(graphene.ObjectType):
     """Task Cycle Specific info"""
     id = graphene.ID(required=True)
-    task = graphene.Field(
-        QLTask,
-        description="""Task definition""",
-        required=True,
-        resolver=get_node
-        )
+    broadcasts = GenericScalar(default_value={})
     cycle_point = graphene.String()
-    state = graphene.String()
-    spawned = graphene.Boolean()
-    latest_message = graphene.String()
-    prerequisites = graphene.List(QLPrerequisite)
+    depth = graphene.Int()
     job_submits = graphene.Int()
+    latest_message = graphene.String()
     namespace = graphene.List(graphene.String,required=True)
     outputs = graphene.Field(QLOutputs)
-    depth = graphene.Int()
+    prerequisites = graphene.List(QLPrerequisite)
+    spawned = graphene.Boolean()
+    state = graphene.String()
     jobs = graphene.List(
         QLJob,
         description="""Task jobs.""",
@@ -263,6 +258,12 @@ class QLTaskProxy(graphene.ObjectType):
         mindepth=graphene.Int(default_value=-1),
         maxdepth=graphene.Int(default_value=-1),
         resolver=get_nodes
+        )
+    task = graphene.Field(
+        QLTask,
+        description="""Task definition""",
+        required=True,
+        resolver=get_node
         )
 
 class QLFamily(graphene.ObjectType):
@@ -435,32 +436,103 @@ class Query(graphene.ObjectType):
 
 ### Mutation Related ###
 ## Mutations
+class ClearBroadcast(graphene.Mutation):
+    """Clear settings globally, or for listed namespaces and/or points"""
+    class Arguments:
+        points = graphene.List(
+            graphene.String,
+            description="""points: ["*"]""",)
+        namespaces = graphene.List(
+            graphene.String,
+            description="""namespaces: ["foo", "BAZ"]""",)
+        settings = graphene.List(
+            GenericScalar,
+            description="""
+settings: [{envronment: {ENVKEY: "env_val"}}, ...]""",)
+
+    modified_settings = GenericScalar()
+    bad_options = GenericScalar()
+
+    def mutate(self, info, points=[], namespaces=[], settings=[]):
+        schd = info.context.get('schd_obj')
+        mod_ret, bad_ret = schd.task_events_mgr.broadcast_mgr.clear_broadcast(
+            points, namespaces, settings)
+        return ClearBroadcast(modified_settings=mod_ret, bad_options=bad_ret)
+
+class ExpireBroadcast(graphene.Mutation):
+    """Expire all settings targeting cycle points earlier than cutoff."""
+    class Arguments:
+        cutoff = graphene.String(
+            description="""cutoff: "*" """,)
+
+    modified_settings = GenericScalar()
+    bad_options = GenericScalar()
+
+    def mutate(self, info, cutoff=None):
+        schd = info.context.get('schd_obj')
+        mod_ret, bad_ret = schd.task_events_mgr.broadcast_mgr.expire_broadcast(
+            cutoff)
+        return ExpireBroadcast(modified_settings=mod_ret, bad_options=bad_ret)
+
+class PutBroadcast(graphene.Mutation):
+    """Add new broadcast settings (server side interface)."""
+    class Arguments:
+        points = graphene.List(
+            graphene.String,
+            description="""points: ["*"]""",)
+        namespaces = graphene.List(
+            graphene.String,
+            description="""namespaces: ["foo", "BAZ"]""",)
+        settings = graphene.List(
+            GenericScalar,
+            description="""
+settings: [{envronment: {ENVKEY: "env_val"}}, ...]""",)
+
+    modified_settings = GenericScalar()
+    bad_options = GenericScalar()
+
+    def mutate(self, info, points=[], namespaces=[], settings=[]):
+        schd = info.context.get('schd_obj')
+        mod_ret, bad_ret = schd.task_events_mgr.broadcast_mgr.put_broadcast(
+            points, namespaces, settings)
+        return PutBroadcast(modified_settings=mod_ret, bad_options=bad_ret)
+
 class StopSuite(graphene.Mutation):
     """Stop the suite."""
     class Arguments:
-        stop_type = graphene.String(required=True)
-        stop_item = graphene.String()
-        stop_args = graphene.List(graphene.String)
+        stop_type = graphene.String(
+            description="""String options:
+- cleanly
+- after_clock_time
+- after_task""",
+            required=True,)
+        items = graphene.List(graphene.String,
+            description="""List of String(s):
+- after_clock_time: ISO 8601 compatible or YYYY/MM/DD-HH:mm
+- after_task: task ID(s)""",)
+        actions = GenericScalar(
+            description="""String boolean pairs:
+- kill_active_tasks:  True/False
+- terminate:  True/False""",)
 
     command_queued = graphene.Boolean()
 
-    def mutate(self, info, stop_type, stop_item=None, stop_args=[]):
+    def mutate(self, info, stop_type, items=[], actions={}):
         if stop_type in ['now']:
             stop_cmd = 'stop_now'
         else:
             stop_cmd = 'set_stop_' + stop_type
-        action = {}
-        for key in stop_args:
-            action[key] = True
-        item = ()
-        if stop_item:
-            item = (stop_item,)
+        stop_items = ()
+        for val in items:
+            stop_items += (val,)
         schd = info.context.get('schd_obj')
-        schd.command_queue.put((stop_cmd,item,action))
+        schd.command_queue.put((stop_cmd,stop_items,actions))
         return StopSuite(command_queued=True)
 
-
 class Mutation(graphene.ObjectType):
+    clear_broadcast = ClearBroadcast.Field()
+    expire_broadcast = ExpireBroadcast.Field()
+    put_broadcast = PutBroadcast.Field()
     stop_suite = StopSuite.Field()
 
 

@@ -329,7 +329,9 @@ class StateSummaryMgr(object):
             prereq_list = []
             for prereq in task.state.prerequisites:
                 # GraphQL objects populated within
-                prereq_list.append(prereq.api_dump())
+                prereq_obj = prereq.api_dump()
+                if prereq_obj:
+                    prereq_list.append(prereq_obj)
 
             t_outs = QLOutputs()
             for _, msg, is_completed in task.state.outputs.get_all():
@@ -339,6 +341,8 @@ class StateSummaryMgr(object):
 
             taskproxy_data[task.identity] = QLTaskProxy(
                 id = task.identity,
+                broadcasts = schd.task_events_mgr.broadcast_mgr.get_broadcast(
+                    task.identity),
                 task = name,
                 cycle_point = point_string,
                 state = ts['state'],
@@ -377,6 +381,8 @@ class StateSummaryMgr(object):
 
             taskproxy_data[task.identity] = QLTaskProxy(
                 id = task.identity,
+                broadcasts = schd.task_events_mgr.broadcast_mgr.get_broadcast(
+                    task.identity),
                 task = name,
                 cycle_point = point_string,
                 state = ts['state'],
