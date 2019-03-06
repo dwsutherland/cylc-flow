@@ -33,6 +33,7 @@ from uuid import uuid4
 from functools import wraps
 
 import flask
+from flask_cors import CORS
 from flask_graphql import GraphQLView
 from cylc.network.schema import schema
 
@@ -150,6 +151,7 @@ def _get_client_info():
 def create_app(schd_obj):
     """HTTP(S) server by flask-gevent, for serving suite runtime API."""
     app = flask.Flask(__name__)
+    CORS(app)
 
     # Make scheduler object available via the config
     app.config.update(

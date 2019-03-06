@@ -57,8 +57,9 @@ opt_spec = {
     'urllib3': [None, 'HTTPSCOMMS', 'PY'],
     'sphinx': [(1, 5, 3), 'HTMLDOCS', 'PY'],
     'Flask': [None, 'HTTPSCOMMS', 'PY'],
-    'Flask-GraphQL': [None, 'HTTPSCOMMS', 'PY'],
+    'Flask-GraphQL': [(2, 0, 0), 'HTTPSCOMMS', 'PY'],
     'Flask-HTTPAuth': [None, 'HTTPSCOMMS', 'PY'],
+    'Flask-Cors': [None, 'HTTPSCOMMS', 'PY'],
     'graphene': [None, 'HTTPSCOMMS', 'PY'],
     'gevent': [None, 'HTTPSCOMMS', 'PY'],
     'pygtk': [(2, 0), 'GUIORGRAPH', 'PY'],
@@ -172,6 +173,9 @@ def check_py_module_ver(module, min_ver, write=True):
             module_version = imported_module.__version__
         elif module == 'Flask-HTTPAuth':
             imported_module = __import__('flask_httpauth')
+            module_version = imported_module.__version__
+        elif module == 'Flask-Cors':
+            imported_module = __import__('flask_cors')
             module_version = imported_module.__version__
         elif module == 'Flask-GraphQL':
             imported_module = __import__('flask_graphql')

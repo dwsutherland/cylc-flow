@@ -32,14 +32,14 @@ pip install coverage pytest-cov mock
 # install dependencies required for running unit tests
 if grep 'unit-tests' <<< "${args[@]}"; then
     pip install EmPy pyopenssl pycodestyle pytest mock
-    pip install Flask Flask-GraphQL Flask-HTTPAuth graphene gevent
+    pip install Flask flask-graphql Flask-HTTPAuth flask-cors graphene gevent
 fi
 
 # install dependencies required for running functional tests
 if grep 'functional-tests' <<< "${args[@]}"; then
     # pygraphviz needs special treatment to avoid an error from "from . import release"
     pip install EmPy pyopenssl
-    pip install Flask Flask-GraphQL Flask-HTTPAuth graphene gevent
+    pip install Flask Flask-GraphQL Flask-HTTPAuth flask-cors graphene gevent
     pip install pygraphviz \
       --install-option="--include-path=/usr/include/graphviz" \
       --install-option="--library-path=/usr/lib/graphviz/"
