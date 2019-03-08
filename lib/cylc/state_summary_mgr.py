@@ -31,7 +31,7 @@ from cylc.suite_status import (
 from cylc.task_state import TASK_STATUS_RUNAHEAD
 from cylc.task_state_prop import extract_group_state
 from cylc.task_job_logs import JOB_LOG_OPTS
-
+from cylc.version import CYLC_VERSION
 from cylc.network.schema import (
     QLFamily, QLFamilyProxy, QLOutputs, QLTask, QLTaskProxy)
 
@@ -175,7 +175,8 @@ class StateSummaryMgr(object):
                     child_tasks = taskdescs,
                     child_families = famdescs)
 
-
+        global_data['api_version'] = schd.flaskapp.config['API']
+        global_data['cylc_version'] = CYLC_VERSION
         global_data['suite'] = schd.suite
         global_data['owner'] = schd.owner
         global_data['host'] = schd.host

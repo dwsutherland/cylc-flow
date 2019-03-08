@@ -888,14 +888,8 @@ conditions; see `cylc conditions`.
         # We could split this into task and family specific functions,
         # this would be needed if the filtering diverges
         # graphql validates argument types so no need to check
-        items = []
-        items += [self._node_id_parse(id, n_type) for id in args['items']]
-        if 'id' in args:
-            items.append(self._node_id_parse(args['id'], n_type))
-        exitems = []
-        exitems += [self._node_id_parse(id, n_type) for id in args['exitems']]
-        if 'exid' in args:
-            exitems.append(self._node_id_parse(args['exid'], n_type))
+        ids = [self._node_id_parse(id, n_type) for id in args['ids']]
+        exids = [self._node_id_parse(id, n_type) for id in args['exids']]
         if n_type == 'QLTask':
             nodes = self.state_summary_mgr.task_data
         elif n_type == 'QLTaskProxy':
@@ -908,7 +902,6 @@ conditions; see `cylc conditions`.
             nodes = self.job_pool.pool
         result = []
         for node in nodes.values():
-            #print(node.proxies)
             if ((not args.get('states') or node.state in args['states']) and
                     not (args.get('exstates') and
                         node.state in args['exstates']) and
@@ -916,9 +909,8 @@ conditions; see `cylc conditions`.
                         node.depth >= args['mindepth']) and
                     (args.get('maxdepth', -1) < 0 or
                         node.depth <= args['maxdepth']) and
-                    (not items or self._node_filter(node, items, n_type)) and
-                    not (exitems and
-                        self._node_filter(node, exitems, n_type))):
+                    (not ids or self._node_filter(node, ids, n_type)) and
+                    not (exids and self._node_filter(node, exids, n_type))):
                 result.append(node)
         return result
 
@@ -934,8 +926,8 @@ conditions; see `cylc conditions`.
             nodes = self.state_summary_mgr.familyproxy_data
         elif n_type == 'QLJob':
             nodes = self.job_pool.pool
-        if args['id']:
-            return nodes.get(args['id'], None)
+        for id in args['ids']:
+            return nodes.get(id, None)
         return None
 
     def info_get_global_data(self):

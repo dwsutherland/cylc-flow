@@ -246,6 +246,7 @@ class Prerequisite(object):
             char = 'c%.{0}d'.format(num_length) % ind
             c_msg = self.MESSAGE_TEMPLATE % message_tuple
             c_val = self.satisfied[message_tuple]
+            c_bool = bool(c_val)
             if c_val is False:
                 c_val = "unsatisfied"
             cond = QLCondition(
@@ -253,7 +254,7 @@ class Prerequisite(object):
                 task_proxy = t_id,
                 expr_alias = char,
                 req_state = message_tuple[2],
-                satisfied = bool(c_val),
+                satisfied = c_bool,
                 message = c_val)
             conds.append(cond)
             temp = temp.replace(c_msg, char)
