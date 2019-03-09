@@ -369,6 +369,50 @@ settings: [{envronment: {ENVKEY: "env_val"}}, ...]""",)
             bad_ret = {'action': action}
         return Broadcast(modified_settings=mod_ret, bad_options=bad_ret)
 
+class DryRunTasks(graphene.Mutation):
+    class Meta:
+        description = """Prepare job file for a task."""
+    class Arguments:
+        items = graphene.List(
+            graphene.String,
+            description="""
+items[0] is an identifier for matching a task proxy.""",
+            required=True,)
+        check_syntax = graphene.Boolean(default_value=True)
+    command_queued = graphene.Boolean()
+    def mutate(self, info, items, check_syntax):
+        schd = info.context.get('schd_obj')
+        schd.command_queue.put(
+            ('dry_run_tasks', (items,), {'check_syntax': check_syntax}))
+        return DryRunTasks(command_queued=True)
+
+class HoldSuite(graphene.Mutation):
+    class Meta:
+        description = """Hold items/suite:
+- set hold on suite.
+- Set hold point of suite."""
+    class Arguments:
+        hold_type = graphene.String(
+            description="""String options:
+- hold_suite
+- hold_after_point_string""",
+            required=True,)
+        point_string = graphene.String()
+    command_queued = graphene.Boolean()
+    def mutate(self, info, hold_type, point_string=None):
+        schd = info.context.get('schd_obj')
+        item_tuple = ()
+        if point_string is not None:
+            item_tuple = (point_string,)
+        schd.command_queue.put((hold_type, item_tuple, {}))
+        return HoldSuite(command_queued=True)
+
+class StopSuiteActions(graphene.InputObjectType):
+    kill_active_tasks = graphene.Boolean(description="""Use with:
+- set_stop_cleanly""")
+    Terminate = graphene.Boolean(description="""Use with:
+- stop_now""")
+
 class StopSuite(graphene.Mutation):
     class Meta:
         description = """Stop the suite:
@@ -379,40 +423,33 @@ class StopSuite(graphene.Mutation):
     class Arguments:
         stop_type = graphene.String(
             description="""String options:
-- cleanly
-- clock_time
-- now
-- task""",
+- set_stop_cleanly
+- set_stop_after_clock_time
+- set_stop_after_task
+- stop_now""",
             required=True,)
-        items = graphene.List(graphene.String,
+        item = graphene.String(
             description="""List of String(s):
 - after_clock_time: ISO 8601 compatible or YYYY/MM/DD-HH:mm
-- after_task: task ID(s)""",)
-        actions = GenericScalar(
-            description="""String boolean pairs:
-- kill_active_tasks:  True/False
-- terminate:  True/False""",)
-
+- after_task: task ID""",)
+        actions = StopSuiteActions()
     command_queued = graphene.Boolean()
-
-    def mutate(self, info, stop_type, items=[], actions={}):
-        if stop_type in ['now']:
-            stop_cmd = 'stop_now'
-        elif stop_type in ['clean']:
-            stop_cmd = 'set_stop_cleanly'
-        else:
-            stop_cmd = 'set_stop_after_' + stop_type
-        stop_items = ()
-        for val in items:
-            stop_items += (val,)
+    def mutate(self, info, stop_type, item=None, actions={}):
         schd = info.context.get('schd_obj')
-        schd.command_queue.put((stop_cmd,stop_items,actions))
+        item_tuple = ()
+        if item is not None:
+            item_tuple = (item,)
+        schd.command_queue.put((stop_type, item_tuple, actions))
         return StopSuite(command_queued=True)
 
 ## Mutation declarations
 class Mutation(graphene.ObjectType):
     broadcast = Broadcast.Field(
         description=Broadcast._meta.description)
+    dry_run_tasks = DryRunTasks.Field(
+        description=DryRunTasks._meta.description)
+    hold_suite = HoldSuite.Field(
+        description=HoldSuite._meta.description)
     stop_suite = StopSuite.Field(
         description=StopSuite._meta.description)
 
