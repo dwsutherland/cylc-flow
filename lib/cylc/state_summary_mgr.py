@@ -180,6 +180,7 @@ class StateSummaryMgr(object):
         global_data['suite'] = schd.suite
         global_data['owner'] = schd.owner
         global_data['host'] = schd.host
+        global_data['port'] = schd.port
         metaql = {}
         user_metaql = {}
         for key, value in schd.config.cfg['meta'].items():

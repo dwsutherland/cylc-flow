@@ -112,6 +112,7 @@ class QLSuite(graphene.ObjectType):
     api_version = graphene.Int()
     cylc_version = graphene.String()
     host = graphene.String()
+    port = graphene.Int()
     job_log_names = graphene.List(graphene.String)
     last_updated = graphene.Float()
     meta = graphene.Field(QLMeta)
@@ -323,7 +324,7 @@ class Query(graphene.ObjectType):
 
 
 ### Mutation Related ###
-## Mutations Types:
+## Mutations defined:
 class Broadcast(graphene.Mutation):
     class Meta:
         description = """Clear, Expire, or Put a broadcast:
@@ -369,23 +370,6 @@ settings: [{envronment: {ENVKEY: "env_val"}}, ...]""",)
             bad_ret = {'action': action}
         return Broadcast(modified_settings=mod_ret, bad_options=bad_ret)
 
-class DryRunTasks(graphene.Mutation):
-    class Meta:
-        description = """Prepare job file for a task."""
-    class Arguments:
-        items = graphene.List(
-            graphene.String,
-            description="""
-items[0] is an identifier for matching a task proxy.""",
-            required=True,)
-        check_syntax = graphene.Boolean(default_value=True)
-    command_queued = graphene.Boolean()
-    def mutate(self, info, items, check_syntax):
-        schd = info.context.get('schd_obj')
-        schd.command_queue.put(
-            ('dry_run_tasks', (items,), {'check_syntax': check_syntax}))
-        return DryRunTasks(command_queued=True)
-
 class HoldSuite(graphene.Mutation):
     class Meta:
         description = """Hold items/suite:
@@ -407,7 +391,67 @@ class HoldSuite(graphene.Mutation):
         schd.command_queue.put((hold_type, item_tuple, {}))
         return HoldSuite(command_queued=True)
 
-class StopSuiteActions(graphene.InputObjectType):
+class NudgeSuite(graphene.Mutation):
+    class Meta:
+        description = """Tell suite to try task processing."""
+    command_queued = graphene.Boolean()
+    def mutate(self, info):
+        schd = info.context.get('schd_obj')
+        schd.command_queue.put(("nudge", (), {}))
+        return NudgeSuite(command_queued=True)
+
+class PutMessages(graphene.Mutation):
+    class Meta:
+        description = """Put task messages in queue for processing
+later by the main loop."""
+    class Arguments:
+        job_id = graphene.String(
+            description="""Task job in the form "CYCLE/TASK_NAME/SUBMIT_NUM""",
+            required=True)
+        event_time = graphene.String(required=True)
+        messages = graphene.List(
+            graphene.List(graphene.String, required=True),
+            description="""List in the form [[severity, message], ...].""")
+    messages_queued = graphene.String()
+    def mutate(self, info, job_id, event_time, messages):
+        schd = info.context.get('schd_obj')
+        for severity, message in messages:
+            schd.message_queue.put((job_id, event_time, severity, message))
+        return PutMessages(messages_queued='%d' % len(messages))
+
+class ReleaseSuite(graphene.Mutation):
+    class Meta:
+        description = """Tell suite to reload the suite definition."""
+    command_queued = graphene.Boolean()
+    def mutate(self, info):
+        schd = info.context.get('schd_obj')
+        schd.command_queue.put(("release_suite", (), {}))
+        return ReleaseSuite(command_queued=True)
+
+class ReloadSuite(graphene.Mutation):
+    class Meta:
+        description = """Tell suite to reload the suite definition."""
+    command_queued = graphene.Boolean()
+    def mutate(self, info):
+        schd = info.context.get('schd_obj')
+        schd.command_queue.put(("reload_suite", (), {}))
+        return ReloadSuite(command_queued=True)
+
+class SetVerbosity(graphene.Mutation):
+    class Meta:
+        description = """Set suite verbosity to new level."""
+    class Arguments:
+        level = graphene.String(
+            description="""levels:
+INFO, WARNING, NORMAL, CRITICAL, ERROR, DEBUG""",
+            required=True)
+    command_queued = graphene.Boolean()
+    def mutate(self, info, level):
+        schd = info.context.get('schd_obj')
+        schd.command_queue.put(("set_verbosity", (level,), {}))
+        return SetVerbosity(command_queued=True)
+
+class StopSuiteArgs(graphene.InputObjectType):
     kill_active_tasks = graphene.Boolean(description="""Use with:
 - set_stop_cleanly""")
     Terminate = graphene.Boolean(description="""Use with:
@@ -415,13 +459,13 @@ class StopSuiteActions(graphene.InputObjectType):
 
 class StopSuite(graphene.Mutation):
     class Meta:
-        description = """Stop the suite:
+        description = """Suite stop actions:
 - Cleanly or after kill active tasks.
 - After cycle point.
 - On event handler completion, or terminate right away.
 - After an instance of a task."""
     class Arguments:
-        stop_type = graphene.String(
+        action = graphene.String(
             description="""String options:
 - set_stop_cleanly
 - set_stop_after_clock_time
@@ -429,30 +473,129 @@ class StopSuite(graphene.Mutation):
 - stop_now""",
             required=True,)
         item = graphene.String(
-            description="""List of String(s):
+            description="""Stop items:
 - after_clock_time: ISO 8601 compatible or YYYY/MM/DD-HH:mm
 - after_task: task ID""",)
-        actions = StopSuiteActions()
+        args = StopSuiteArgs()
     command_queued = graphene.Boolean()
-    def mutate(self, info, stop_type, item=None, actions={}):
+    def mutate(self, info, action, item=None, args={}):
         schd = info.context.get('schd_obj')
         item_tuple = ()
         if item is not None:
             item_tuple = (item,)
-        schd.command_queue.put((stop_type, item_tuple, actions))
+        schd.command_queue.put((action, item_tuple, args))
         return StopSuite(command_queued=True)
+
+class TaskArgs(graphene.InputObjectType):
+    check_syntax = graphene.Boolean(description="""Use with actions:
+- dry_run_tasks""")
+    no_check = graphene.Boolean(description="""Use with actions:
+- insert_tasks""")
+    stop_point_string = graphene.String(description="""Use with actions:
+- insert_tasks""")
+    poll_succ = graphene.Boolean(description="""Use with actions:
+- poll_tasks""")
+    spawn = graphene.Boolean(description="""Use with actions:
+- remove_tasks""")
+    state = graphene.String(description="""Use with actions:
+- reset_task_states""")
+    outputs = graphene.List(graphene.String,description="""Use with actions:
+- reset_task_states""")
+    back_out = graphene.Boolean(description="""Use with actions:
+- trigger_tasks""")
+
+class TaskActions(graphene.Mutation):
+    class Meta:
+        description = """Task actions:
+- Prepare job file for task(s).
+- Hold tasks.
+- Insert task proxies.
+- Kill task jobs.
+- Return True if task_id exists (and running).
+- Unhold tasks.
+- Remove tasks from task pool.
+- Reset statuses tasks.
+- Spawn tasks.
+- Trigger submission of task jobs where possible."""
+    class Arguments:
+        action = graphene.String(
+            description = """Task actions:
+- dry_run_tasks
+- hold_tasks
+- insert_tasks
+- kill_tasks
+- poll_tasks
+- release_tasks
+- remove_tasks
+- reset_task_states
+- spawn_tasks
+- trigger_tasks""",
+            required=True,)
+        items = graphene.List(
+            graphene.String,
+            description="""
+A list of identifiers (family/glob/id) for matching task proxies, i.e.
+["foo.201901*:failed", "201901*/baa:failed", "FAM.20190101T0000Z", "FAM2",
+    "*.20190101T0000Z"]
+""",
+            required=True,)
+        args = TaskArgs()
+    command_queued = graphene.Boolean()
+    def mutate(self, info, action, items, args={}):
+        schd = info.context.get('schd_obj')
+        schd.command_queue.put((action, (items,), args))
+        return TaskActions(command_queued=True)
+
+class TakeCheckpoint(graphene.Mutation):
+    class Meta:
+        description = """Checkpoint current task pool."""
+    class Arguments:
+        items = graphene.List(
+            graphene.String,
+            description="""items[0] used as checkpoint event name).""",
+            required=True,)
+    command_queued = graphene.Boolean()
+    def mutate(self, info, items):
+        schd = info.context.get('schd_obj')
+        schd.command_queue.put(("take_checkpoints", (items,), {}))
+        return TakeCheckpoint(command_queued=True)
+
+class XTrigger(graphene.Mutation):
+    class Meta:
+        description = """Server-side external event trigger interface."""
+    class Arguments:
+        event_message = graphene.String(required=True)
+        event_id = graphene.String(required=True)
+    event_queued = graphene.Boolean()
+    def mutate(self, info, event_message, event_id):
+        schd = info.context.get('schd_obj')
+        schd.ext_trigger_queue.put((event_message, event_id))
+        return XTrigger(event_queued=True)
 
 ## Mutation declarations
 class Mutation(graphene.ObjectType):
     broadcast = Broadcast.Field(
         description=Broadcast._meta.description)
-    dry_run_tasks = DryRunTasks.Field(
-        description=DryRunTasks._meta.description)
+    x_trigger = XTrigger.Field(
+        description=XTrigger._meta.description)
     hold_suite = HoldSuite.Field(
         description=HoldSuite._meta.description)
+    nudge_suite = NudgeSuite.Field(
+        description=NudgeSuite._meta.description)
+    put_messages = PutMessages.Field(
+        description=PutMessages._meta.description)
+    release_suite = ReleaseSuite.Field(
+        description=ReleaseSuite._meta.description)
+    reload_suite = ReloadSuite.Field(
+        description=ReloadSuite._meta.description)
+    set_verbosity = SetVerbosity.Field(
+        description=SetVerbosity._meta.description)
     stop_suite = StopSuite.Field(
         description=StopSuite._meta.description)
+    take_checkpoint = TakeCheckpoint.Field(
+        description=TakeCheckpoint._meta.description)
+    task_actions = TaskActions.Field(
+        description=TaskActions._meta.description)
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
-
