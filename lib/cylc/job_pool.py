@@ -26,7 +26,7 @@ from cylc import LOG
 from cylc.task_id import TaskID
 from cylc.task_job_logs import get_task_job_id
 from cylc.task_state import (
-    TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED)
 from cylc.wallclock import (
@@ -34,6 +34,7 @@ from cylc.wallclock import (
 from cylc.network.schema import QLJob
 
 JOB_STATUSES_ALL = [
+    TASK_STATUS_READY,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_SUBMIT_RETRYING,
@@ -73,6 +74,7 @@ class JobPool(object):
             post_script = job_conf['post-script'],
             pre_script = job_conf['pre-script'],
             script = job_conf['script'],
+            state = JOB_STATUSES_ALL[0],
             shell = job_conf['shell'],
             work_sub_dir = job_conf['work_d'],
             submit_num = job_conf['submit_num'],
@@ -108,13 +110,7 @@ class JobPool(object):
 
         Set values of both event_key + "_time" and event_key + "_time_string".
         """
-        if time_str is None:
-            setattr(self.pool[job_d], event_key + '_time', None)
-        else:
-            setattr(
-                self.pool[job_d], event_key + '_time',
-                float(str2time(time_str)))
-        setattr(self.pool[job_d], event_key + '_time_string', time_str)
+        setattr(self.pool[job_d], event_key + '_time', time_str)
 
     @staticmethod
     def parse_job_item(item):

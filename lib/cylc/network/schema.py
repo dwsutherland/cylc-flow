@@ -144,8 +144,7 @@ class QLJob(graphene.ObjectType):
     exit_script = graphene.String()
     extra_logs = graphene.List(graphene.String)
     execution_time_limit = graphene.Float()
-    finished_time = graphene.Float()
-    finished_time_string = graphene.String()
+    finished_time = graphene.String()
     host = graphene.String()
     init_script = graphene.String()
     job_log_dir = graphene.String()
@@ -156,12 +155,10 @@ class QLJob(graphene.ObjectType):
     pre_script = graphene.String()
     script = graphene.String()
     shell = graphene.String()
-    started_time = graphene.Float()
-    started_time_string = graphene.String()
+    started_time = graphene.String()
     state = graphene.String()
     submit_num = graphene.Int()
-    submitted_time = graphene.Float()
-    submitted_time_string = graphene.String()
+    submitted_time = graphene.String()
     task_proxy = graphene.Field(
         lambda: QLTaskProxy,
         description="""Associated Task Proxy""",
@@ -364,17 +361,16 @@ settings: [{envronment: {ENVKEY: "env_val"}}, ...]""",)
 class HoldSuite(graphene.Mutation):
     class Meta:
         description = """Hold items/suite:
-- set hold on suite.
+- set hold on suite.  (default)
 - Set hold point of suite."""
     class Arguments:
         hold_type = graphene.String(
             description="""String options:
-- hold_suite
-- hold_after_point_string""",
-            required=True,)
+- hold_suite  (default)
+- hold_after_point_string""")
         point_string = graphene.String()
     command_queued = graphene.Boolean()
-    def mutate(self, info, hold_type, point_string=None):
+    def mutate(self, info, hold_type='hold_suite', point_string=None):
         schd = info.context.get('schd_obj')
         item_tuple = ()
         if point_string is not None:
@@ -451,25 +447,24 @@ class StopSuiteArgs(graphene.InputObjectType):
 class StopSuite(graphene.Mutation):
     class Meta:
         description = """Suite stop actions:
-- Cleanly or after kill active tasks.
+- Cleanly or after kill active tasks. (default)
 - After cycle point.
 - On event handler completion, or terminate right away.
 - After an instance of a task."""
     class Arguments:
         action = graphene.String(
             description="""String options:
-- set_stop_cleanly
+- set_stop_cleanly  (default)
 - set_stop_after_clock_time
 - set_stop_after_task
-- stop_now""",
-            required=True,)
+- stop_now""")
         item = graphene.String(
             description="""Stop items:
 - after_clock_time: ISO 8601 compatible or YYYY/MM/DD-HH:mm
 - after_task: task ID""",)
         args = StopSuiteArgs()
     command_queued = graphene.Boolean()
-    def mutate(self, info, action, item=None, args={}):
+    def mutate(self, info, action='set_stop_cleanly', item=None, args={}):
         schd = info.context.get('schd_obj')
         item_tuple = ()
         if item is not None:
