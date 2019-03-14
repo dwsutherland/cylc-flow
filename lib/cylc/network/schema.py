@@ -131,15 +131,6 @@ class QLSuite(graphene.ObjectType):
     time_zone_info = graphene.Field(QLTimeZone)
     tree_depth = graphene.Int()
 
-class QLOutputs(graphene.ObjectType):
-    """Task State Outputs"""
-    expired = graphene.Boolean()
-    submitted = graphene.Boolean()
-    submit_failed = graphene.Boolean()
-    started = graphene.Boolean()
-    succeeded = graphene.Boolean()
-    failed = graphene.Boolean()
-
 class QLJob(graphene.ObjectType):
     """Jobs."""
     id = graphene.ID(required=True)
@@ -222,7 +213,7 @@ class QLTaskProxy(graphene.ObjectType):
     job_submits = graphene.Int()
     latest_message = graphene.String()
     namespace = graphene.List(graphene.String,required=True)
-    outputs = graphene.Field(QLOutputs)
+    outputs = GenericScalar()
     prerequisites = graphene.List(QLPrerequisite)
     spawned = graphene.Boolean()
     state = graphene.String()

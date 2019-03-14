@@ -33,7 +33,7 @@ from cylc.task_state_prop import extract_group_state
 from cylc.task_job_logs import JOB_LOG_OPTS
 from cylc.version import CYLC_VERSION
 from cylc.network.schema import (
-    QLFamily, QLFamilyProxy, QLOutputs, QLTask, QLTaskProxy)
+    QLFamily, QLFamilyProxy, QLTask, QLTaskProxy)
 
 
 class StateSummaryMgr(object):
@@ -335,11 +335,9 @@ class StateSummaryMgr(object):
                 if prereq_obj:
                     prereq_list.append(prereq_obj)
 
-            t_outs = QLOutputs()
+            t_outs = {}
             for _, msg, is_completed in task.state.outputs.get_all():
-                if msg == 'submit-failed':
-                    msg = 'submit_failed'
-                setattr(t_outs, msg, is_completed)
+                t_outs[msg] = is_completed
 
             taskproxy_data[task.identity] = QLTaskProxy(
                 id = task.identity,
@@ -375,11 +373,9 @@ class StateSummaryMgr(object):
                 # GraphQL objects populated within
                 prereq_list.append(prereq.api_dump())
 
-            t_outs = QLOutputs()
+            t_outs = {}
             for _, msg, is_completed in task.state.outputs.get_all():
-                if msg == 'submit-failed':
-                    msg = 'submit_failed'
-                setattr(t_outs, msg, is_completed)
+                t_outs[msg] = is_completed
 
             taskproxy_data[task.identity] = QLTaskProxy(
                 id = task.identity,
