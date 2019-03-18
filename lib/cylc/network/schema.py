@@ -60,13 +60,23 @@ def get_node(root, info, **args):
     """Resolver for returning job, task, family node"""
     field_name = to_snake_case(info.field_name)
     field_ids = getattr(root, field_name, None)
-    if field_ids:
+    if args.get('id'):
+        args['ids'] = [args['id']]
+    elif field_ids:
         args['ids'] = [field_ids]
     elif field_ids == []:
         return []
     schd = info.context.get('schd_obj')
     node_type = str(info.return_type).replace('!','')
     return schd.info_get_node(args, n_type=node_type)
+
+
+def get_graph_edges(root, info, start_point, end_point, group_nodes=None,
+        ungroup_nodes=None, ungroup_recursive=False, group_all=False,
+        ungroup_all=False):
+    schd = info.context.get('schd_obj')
+    return schd.info_get_edges(start_point, end_point, group_nodes,
+            ungroup_nodes, ungroup_recursive, group_all, ungroup_all)
 
 ## Types:
 class QLMeta(graphene.ObjectType):
@@ -258,7 +268,8 @@ class QLFamily(graphene.ObjectType):
         resolver=get_nodes)
 
 class QLFamilyProxy(graphene.ObjectType):
-    """Family composite."""
+    class Meta:
+        description = """Family composite."""
     id = graphene.ID(required=True)
     family = graphene.Field(
         QLFamily,
@@ -284,31 +295,79 @@ class QLFamilyProxy(graphene.ObjectType):
         args = tree_args,
         resolver=get_nodes)
 
+class DepEdge(graphene.ObjectType):
+    class Meta:
+        description = """Dependency edge task/family proxies"""
+    id = graphene.ID(required=True)
+    start = graphene.ID(required=True)
+    end = graphene.ID()
+    suicide = graphene.Boolean()
+    cond = graphene.Boolean()
+
+class DepEdges(graphene.ObjectType):
+    class Meta:
+        description = """Dependency edge"""
+    edges = graphene.List(DepEdge)
+    suite_polling_tasks = GenericScalar()
+    leaves = graphene.List(graphene.String)
+    feet = graphene.List(graphene.String)
+
 ## Query declaration
 class Query(graphene.ObjectType):
     suite_info = graphene.Field(
         QLSuite,
         resolver=get_suite_info)
+    job = graphene.Field(
+        QLJob,
+        id=graphene.ID(required=True),
+        resolver=get_node)
     jobs = graphene.List(
         QLJob,
-        args = job_args,
+        args=job_args,
         resolver=get_nodes)
+    task = graphene.Field(
+        QLTask,
+        id=graphene.ID(required=True),
+        resolver=get_node)
     tasks = graphene.List(
         QLTask,
-        args = tree_args,
+        args=tree_args,
         resolver=get_nodes)
+    task_proxy = graphene.Field(
+        QLTaskProxy,
+        id=graphene.ID(required=True),
+        resolver=get_node)
     task_proxies = graphene.List(
         QLTaskProxy,
-        args = tree_args,
+        args=tree_args,
         resolver=get_nodes)
+    family = graphene.Field(
+        QLFamily,
+        id=graphene.ID(required=True),
+        resolver=get_node)
     families = graphene.List(
         QLFamily,
-        args = tree_args,
+        args=tree_args,
         resolver=get_nodes)
+    family_proxy = graphene.Field(
+        QLFamilyProxy,
+        id=graphene.ID(required=True),
+        resolver=get_node)
     family_proxies = graphene.List(
         QLFamilyProxy,
-        args = tree_args,
+        args=tree_args,
         resolver=get_nodes)
+    edges = graphene.Field(
+        DepEdges,
+        start_point=graphene.String(),
+        end_point=graphene.String(),
+        group_nodes=graphene.List(graphene.String),
+        ungroup_nodes=graphene.List(graphene.String),
+        ungroup_recursive=graphene.Boolean(),
+        group_all=graphene.Boolean(),
+        ungroup_all=graphene.Boolean(),
+        resolver=get_graph_edges)
+
 
 
 ### Mutation Related ###
