@@ -52,7 +52,7 @@ from cylc.loggingutil import CylcLogFormatter, TimestampRotatingFileHandler
 from cylc.log_diagnosis import LogSpec
 from cylc.network import PRIVILEGE_LEVELS
 from cylc.network import httpserver
-from cylc.network import schema
+from cylc.network.schema import QLEdge, QLEdges
 from cylc.profiler import Profiler
 from cylc.state_summary_mgr import StateSummaryMgr
 from cylc.subprocpool import SuiteProcPool
@@ -917,6 +917,9 @@ conditions; see `cylc conditions`.
 
     def info_get_node(self, args={}, n_type='QLTask'):
         """Return GrapphQL task object for given id."""
+        ids = args.get('ids', None)
+        if not ids:
+            return None
         if n_type == 'QLTask':
             nodes = self.state_summary_mgr.task_data
         elif n_type == 'QLTaskProxy':
@@ -927,10 +930,11 @@ conditions; see `cylc conditions`.
             nodes = self.state_summary_mgr.familyproxy_data
         elif n_type == 'QLJob':
             nodes = self.job_pool.pool
-        for id in args['ids']:
-            return nodes.get(id, None)
-        return None
-
+        elif n_type == 'QLNode':
+            tnodes = self.state_summary_mgr.taskproxy_data
+            fnodes = self.state_summary_mgr.familyproxy_data
+            return tnodes.get(ids[0], fnodes.get(ids[0], None))
+        return nodes.get(ids[0], None)
 
     def info_get_edges(self, start_point, end_point, group_nodes=None,
                        ungroup_nodes=None, ungroup_recursive=False,
@@ -940,13 +944,13 @@ conditions; see `cylc conditions`.
                 start_point, end_point, group_nodes, ungroup_nodes,
                 ungroup_recursive, group_all, ungroup_all):
             e_id = "edge_" + e_list[0] + (e_list[1] or "")
-            edge_list.append(schema.DepEdge(
+            edge_list.append(QLEdge(
                 id = e_id,
-                start = e_list[0],
-                end = e_list[1],
+                tail_node = e_list[0],
+                head_node = e_list[1],
                 suicide = e_list[3],
                 cond = e_list[4]))
-        return schema.DepEdges(edge_list, self.config.suite_polling_tasks,
+        return QLEdges(edge_list, self.config.suite_polling_tasks,
             leaves=self.config.leaves, feet=self.config.feet)
 
 

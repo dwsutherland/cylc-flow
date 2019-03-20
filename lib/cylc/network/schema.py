@@ -295,19 +295,28 @@ class QLFamilyProxy(graphene.ObjectType):
         args = tree_args,
         resolver=get_nodes)
 
-class DepEdge(graphene.ObjectType):
+class QLNode(graphene.Union):
+    class Meta:
+        types = (QLTaskProxy, QLFamilyProxy)
+
+class QLEdge(graphene.ObjectType):
     class Meta:
         description = """Dependency edge task/family proxies"""
     id = graphene.ID(required=True)
-    start = graphene.ID(required=True)
-    end = graphene.ID()
+    tail_node = graphene.Field(
+        QLNode,
+        required=True,
+        resolver=get_node)
+    head_node = graphene.Field(
+        QLNode,
+        resolver=get_node)
     suicide = graphene.Boolean()
     cond = graphene.Boolean()
 
-class DepEdges(graphene.ObjectType):
+class QLEdges(graphene.ObjectType):
     class Meta:
         description = """Dependency edge"""
-    edges = graphene.List(DepEdge)
+    edges = graphene.List(QLEdge)
     suite_polling_tasks = GenericScalar()
     leaves = graphene.List(graphene.String)
     feet = graphene.List(graphene.String)
@@ -358,7 +367,7 @@ class Query(graphene.ObjectType):
         args=tree_args,
         resolver=get_nodes)
     edges = graphene.Field(
-        DepEdges,
+        QLEdges,
         start_point=graphene.String(),
         end_point=graphene.String(),
         group_nodes=graphene.List(graphene.String),
