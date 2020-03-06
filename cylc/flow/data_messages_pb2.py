@@ -18,7 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=b'\n\x13\x64\x61ta_messages.proto\"O\n\x06PbMeta\x12\r\n\x05title\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x0b\n\x03URL\x18\x03 \x01(\t\x12\x14\n\x0cuser_defined\x18\x04 \x03(\t\"[\n\nPbTimeZone\x12\r\n\x05hours\x18\x01 \x01(\x05\x12\x0f\n\x07minutes\x18\x02 \x01(\x05\x12\x14\n\x0cstring_basic\x18\x03 \x01(\t\x12\x17\n\x0fstring_extended\x18\x04 \x01(\t\"\xeb\x05\n\nPbWorkflow\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x0e\n\x06status\x18\x04 \x01(\t\x12\x0c\n\x04host\x18\x05 \x01(\t\x12\x0c\n\x04port\x18\x06 \x01(\x05\x12\r\n\x05owner\x18\x07 \x01(\t\x12\r\n\x05tasks\x18\x08 \x03(\t\x12\x10\n\x08\x66\x61milies\x18\t \x03(\t\x12\x17\n\x05\x65\x64ges\x18\n \x01(\x0b\x32\x08.PbEdges\x12\x13\n\x0b\x61pi_version\x18\x0b \x01(\x05\x12\x14\n\x0c\x63ylc_version\x18\x0c \x01(\t\x12\x14\n\x0clast_updated\x18\r \x01(\x01\x12\x15\n\x04meta\x18\x0e \x01(\x0b\x32\x07.PbMeta\x12#\n\x1bnewest_runahead_cycle_point\x18\x0f \x01(\t\x12\x1a\n\x12newest_cycle_point\x18\x10 \x01(\t\x12\x1a\n\x12oldest_cycle_point\x18\x11 \x01(\t\x12\x10\n\x08reloaded\x18\x12 \x01(\x08\x12\x10\n\x08run_mode\x18\x13 \x01(\t\x12\x14\n\x0c\x63ycling_mode\x18\x14 \x01(\t\x12\x32\n\x0cstate_totals\x18\x15 \x03(\x0b\x32\x1c.PbWorkflow.StateTotalsEntry\x12\x18\n\x10workflow_log_dir\x18\x16 \x01(\t\x12#\n\x0etime_zone_info\x18\x17 \x01(\x0b\x32\x0b.PbTimeZone\x12\x12\n\ntree_depth\x18\x18 \x01(\x05\x12\x15\n\rjob_log_names\x18\x19 \x03(\t\x12\x15\n\rns_defn_order\x18\x1a \x03(\t\x12\x0e\n\x06states\x18\x1b \x03(\t\x12\x14\n\x0ctask_proxies\x18\x1c \x03(\t\x12\x16\n\x0e\x66\x61mily_proxies\x18\x1d \x03(\t\x12\x12\n\nstatus_msg\x18\x1e \x01(\t\x12\x15\n\ris_held_total\x18\x1f \x01(\x05\x1a\x32\n\x10StateTotalsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x05:\x02\x38\x01\"\x85\x05\n\x05PbJob\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x12\n\nsubmit_num\x18\x03 \x01(\x05\x12\r\n\x05state\x18\x04 \x01(\t\x12\x12\n\ntask_proxy\x18\x05 \x01(\t\x12\x16\n\x0esubmitted_time\x18\x06 \x01(\t\x12\x14\n\x0cstarted_time\x18\x07 \x01(\t\x12\x15\n\rfinished_time\x18\x08 \x01(\t\x12\x18\n\x10\x62\x61tch_sys_job_id\x18\t \x01(\t\x12\x16\n\x0e\x62\x61tch_sys_name\x18\n \x01(\t\x12\x12\n\nenv_script\x18\x0b \x01(\t\x12\x12\n\nerr_script\x18\x0c \x01(\t\x12\x13\n\x0b\x65xit_script\x18\r \x01(\t\x12\x1c\n\x14\x65xecution_time_limit\x18\x0e \x01(\x02\x12\x0c\n\x04host\x18\x0f \x01(\t\x12\x13\n\x0binit_script\x18\x10 \x01(\t\x12\x13\n\x0bjob_log_dir\x18\x11 \x01(\t\x12\r\n\x05owner\x18\x12 \x01(\t\x12\x13\n\x0bpost_script\x18\x13 \x01(\t\x12\x12\n\npre_script\x18\x14 \x01(\t\x12\x0e\n\x06script\x18\x15 \x01(\t\x12\r\n\x05shell\x18\x16 \x01(\t\x12\x14\n\x0cwork_sub_dir\x18\x17 \x01(\t\x12\x16\n\x0e\x62\x61tch_sys_conf\x18\x18 \x03(\t\x12\x13\n\x0b\x65nvironment\x18\x19 \x03(\t\x12\x12\n\ndirectives\x18\x1a \x03(\t\x12\x16\n\x0eparam_env_tmpl\x18\x1b \x03(\t\x12\x11\n\tparam_var\x18\x1c \x03(\t\x12\x12\n\nextra_logs\x18\x1d \x03(\t\x12\x0c\n\x04name\x18\x1e \x01(\t\x12\x13\n\x0b\x63ycle_point\x18\x1f \x01(\t\x12\x10\n\x08messages\x18  \x03(\t\"\x96\x01\n\x06PbTask\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x15\n\x04meta\x18\x04 \x01(\x0b\x32\x07.PbMeta\x12\x19\n\x11mean_elapsed_time\x18\x05 \x01(\x02\x12\r\n\x05\x64\x65pth\x18\x06 \x01(\x05\x12\x0f\n\x07proxies\x18\x07 \x03(\t\x12\x11\n\tnamespace\x18\x08 \x03(\t\"r\n\nPbPollTask\x12\x13\n\x0blocal_proxy\x18\x01 \x01(\t\x12\x10\n\x08workflow\x18\x02 \x01(\t\x12\x14\n\x0cremote_proxy\x18\x03 \x01(\t\x12\x11\n\treq_state\x18\x04 \x01(\t\x12\x14\n\x0cgraph_string\x18\x05 \x01(\t\"l\n\x0bPbCondition\x12\x12\n\ntask_proxy\x18\x01 \x01(\t\x12\x12\n\nexpr_alias\x18\x02 \x01(\t\x12\x11\n\treq_state\x18\x03 \x01(\t\x12\x11\n\tsatisfied\x18\x04 \x01(\x08\x12\x0f\n\x07message\x18\x05 \x01(\t\"o\n\x0ePbPrerequisite\x12\x12\n\nexpression\x18\x01 \x01(\t\x12 \n\nconditions\x18\x02 \x03(\x0b\x32\x0c.PbCondition\x12\x14\n\x0c\x63ycle_points\x18\x03 \x03(\t\x12\x11\n\tsatisfied\x18\x04 \x01(\x08\"\xfd\x02\n\x0bPbTaskProxy\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0c\n\x04task\x18\x03 \x01(\t\x12\r\n\x05state\x18\x04 \x01(\t\x12\x13\n\x0b\x63ycle_point\x18\x05 \x01(\t\x12\x0f\n\x07spawned\x18\x06 \x01(\x08\x12\r\n\x05\x64\x65pth\x18\x07 \x01(\x05\x12\x13\n\x0bjob_submits\x18\x08 \x01(\x05\x12\x16\n\x0elatest_message\x18\t \x01(\t\x12\x0f\n\x07outputs\x18\n \x03(\t\x12\x12\n\nbroadcasts\x18\x0b \x03(\t\x12\x11\n\tnamespace\x18\x0c \x03(\t\x12&\n\rprerequisites\x18\r \x03(\x0b\x32\x0f.PbPrerequisite\x12\x0c\n\x04jobs\x18\x0e \x03(\t\x12\x0f\n\x07parents\x18\x0f \x03(\t\x12\x14\n\x0c\x66irst_parent\x18\x10 \x01(\t\x12\x0c\n\x04name\x18\x11 \x01(\t\x12\x0f\n\x07is_held\x18\x12 \x01(\x08\x12\r\n\x05\x65\x64ges\x18\x13 \x03(\t\x12\x11\n\tancestors\x18\x14 \x03(\t\"\xa8\x01\n\x08PbFamily\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x15\n\x04meta\x18\x04 \x01(\x0b\x32\x07.PbMeta\x12\r\n\x05\x64\x65pth\x18\x05 \x01(\x05\x12\x0f\n\x07proxies\x18\x06 \x03(\t\x12\x0f\n\x07parents\x18\x07 \x03(\t\x12\x13\n\x0b\x63hild_tasks\x18\x08 \x03(\t\x12\x16\n\x0e\x63hild_families\x18\t \x03(\t\"\xf3\x01\n\rPbFamilyProxy\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x13\n\x0b\x63ycle_point\x18\x03 \x01(\t\x12\x0c\n\x04name\x18\x04 \x01(\t\x12\x0e\n\x06\x66\x61mily\x18\x05 \x01(\t\x12\r\n\x05state\x18\x06 \x01(\t\x12\r\n\x05\x64\x65pth\x18\x07 \x01(\x05\x12\x14\n\x0c\x66irst_parent\x18\x08 \x01(\t\x12\x0f\n\x07parents\x18\t \x03(\t\x12\x13\n\x0b\x63hild_tasks\x18\n \x03(\t\x12\x16\n\x0e\x63hild_families\x18\x0b \x03(\t\x12\x0f\n\x07is_held\x18\x0c \x01(\x08\x12\x11\n\tancestors\x18\r \x03(\t\"b\n\x06PbEdge\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0e\n\x06source\x18\x03 \x01(\t\x12\x0e\n\x06target\x18\x04 \x01(\t\x12\x0f\n\x07suicide\x18\x05 \x01(\x08\x12\x0c\n\x04\x63ond\x18\x06 \x01(\x08\"o\n\x07PbEdges\x12\n\n\x02id\x18\x01 \x01(\t\x12\r\n\x05\x65\x64ges\x18\x02 \x03(\t\x12+\n\x16workflow_polling_tasks\x18\x03 \x03(\x0b\x32\x0b.PbPollTask\x12\x0e\n\x06leaves\x18\x04 \x03(\t\x12\x0c\n\x04\x66\x65\x65t\x18\x05 \x03(\t\"\xe0\x01\n\x10PbEntireWorkflow\x12\x1d\n\x08workflow\x18\x01 \x01(\x0b\x32\x0b.PbWorkflow\x12\x16\n\x05tasks\x18\x02 \x03(\x0b\x32\x07.PbTask\x12\"\n\x0ctask_proxies\x18\x03 \x03(\x0b\x32\x0c.PbTaskProxy\x12\x14\n\x04jobs\x18\x04 \x03(\x0b\x32\x06.PbJob\x12\x1b\n\x08\x66\x61milies\x18\x05 \x03(\x0b\x32\t.PbFamily\x12&\n\x0e\x66\x61mily_proxies\x18\x06 \x03(\x0b\x32\x0e.PbFamilyProxy\x12\x16\n\x05\x65\x64ges\x18\x07 \x03(\x0b\x32\x07.PbEdge\"d\n\x07\x45\x44\x65ltas\x12\x0c\n\x04time\x18\x01 \x01(\x01\x12\x10\n\x08\x63hecksum\x18\x02 \x01(\x03\x12\x0e\n\x06pruned\x18\x03 \x03(\t\x12\x17\n\x06\x64\x65ltas\x18\x04 \x03(\x0b\x32\x07.PbEdge\x12\x10\n\x08reloaded\x18\x05 \x01(\x08\"f\n\x07\x46\x44\x65ltas\x12\x0c\n\x04time\x18\x01 \x01(\x01\x12\x10\n\x08\x63hecksum\x18\x02 \x01(\x03\x12\x0e\n\x06pruned\x18\x03 \x03(\t\x12\x19\n\x06\x64\x65ltas\x18\x04 \x03(\x0b\x32\t.PbFamily\x12\x10\n\x08reloaded\x18\x05 \x01(\x08\"l\n\x08\x46PDeltas\x12\x0c\n\x04time\x18\x01 \x01(\x01\x12\x10\n\x08\x63hecksum\x18\x02 \x01(\x03\x12\x0e\n\x06pruned\x18\x03 \x03(\t\x12\x1e\n\x06\x64\x65ltas\x18\x04 \x03(\x0b\x32\x0e.PbFamilyProxy\x12\x10\n\x08reloaded\x18\x05 \x01(\x08\"c\n\x07JDeltas\x12\x0c\n\x04time\x18\x01 \x01(\x01\x12\x10\n\x08\x63hecksum\x18\x02 \x01(\x03\x12\x0e\n\x06pruned\x18\x03 \x03(\t\x12\x16\n\x06\x64\x65ltas\x18\x04 \x03(\x0b\x32\x06.PbJob\x12\x10\n\x08reloaded\x18\x05 \x01(\x08\"d\n\x07TDeltas\x12\x0c\n\x04time\x18\x01 \x01(\x01\x12\x10\n\x08\x63hecksum\x18\x02 \x01(\x03\x12\x0e\n\x06pruned\x18\x03 \x03(\t\x12\x17\n\x06\x64\x65ltas\x18\x04 \x03(\x0b\x32\x07.PbTask\x12\x10\n\x08reloaded\x18\x05 \x01(\x08\"j\n\x08TPDeltas\x12\x0c\n\x04time\x18\x01 \x01(\x01\x12\x10\n\x08\x63hecksum\x18\x02 \x01(\x03\x12\x0e\n\x06pruned\x18\x03 \x03(\t\x12\x1c\n\x06\x64\x65ltas\x18\x04 \x03(\x0b\x32\x0c.PbTaskProxy\x12\x10\n\x08reloaded\x18\x05 \x01(\x08\"\xd4\x01\n\tAllDeltas\x12\x1d\n\x08workflow\x18\x01 \x01(\x0b\x32\x0b.PbWorkflow\x12\x17\n\x05\x65\x64ges\x18\x02 \x01(\x0b\x32\x08.EDeltas\x12\x1a\n\x08\x66\x61milies\x18\x03 \x01(\x0b\x32\x08.FDeltas\x12!\n\x0e\x66\x61mily_proxies\x18\x04 \x01(\x0b\x32\t.FPDeltas\x12\x16\n\x04jobs\x18\x05 \x01(\x0b\x32\x08.JDeltas\x12\x17\n\x05tasks\x18\x06 \x01(\x0b\x32\x08.TDeltas\x12\x1f\n\x0ctask_proxies\x18\x07 \x01(\x0b\x32\t.TPDeltasb\x06proto3'
+  serialized_pb=b'\n\x13\x64\x61ta_messages.proto\"O\n\x06PbMeta\x12\r\n\x05title\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x0b\n\x03URL\x18\x03 \x01(\t\x12\x14\n\x0cuser_defined\x18\x04 \x03(\t\"[\n\nPbTimeZone\x12\r\n\x05hours\x18\x01 \x01(\x05\x12\x0f\n\x07minutes\x18\x02 \x01(\x05\x12\x14\n\x0cstring_basic\x18\x03 \x01(\t\x12\x17\n\x0fstring_extended\x18\x04 \x01(\t\"\xeb\x05\n\nPbWorkflow\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x0e\n\x06status\x18\x04 \x01(\t\x12\x0c\n\x04host\x18\x05 \x01(\t\x12\x0c\n\x04port\x18\x06 \x01(\x05\x12\r\n\x05owner\x18\x07 \x01(\t\x12\r\n\x05tasks\x18\x08 \x03(\t\x12\x10\n\x08\x66\x61milies\x18\t \x03(\t\x12\x17\n\x05\x65\x64ges\x18\n \x01(\x0b\x32\x08.PbEdges\x12\x13\n\x0b\x61pi_version\x18\x0b \x01(\x05\x12\x14\n\x0c\x63ylc_version\x18\x0c \x01(\t\x12\x14\n\x0clast_updated\x18\r \x01(\x01\x12\x15\n\x04meta\x18\x0e \x01(\x0b\x32\x07.PbMeta\x12#\n\x1bnewest_runahead_cycle_point\x18\x0f \x01(\t\x12\x1a\n\x12newest_cycle_point\x18\x10 \x01(\t\x12\x1a\n\x12oldest_cycle_point\x18\x11 \x01(\t\x12\x10\n\x08reloaded\x18\x12 \x01(\x08\x12\x10\n\x08run_mode\x18\x13 \x01(\t\x12\x14\n\x0c\x63ycling_mode\x18\x14 \x01(\t\x12\x32\n\x0cstate_totals\x18\x15 \x03(\x0b\x32\x1c.PbWorkflow.StateTotalsEntry\x12\x18\n\x10workflow_log_dir\x18\x16 \x01(\t\x12#\n\x0etime_zone_info\x18\x17 \x01(\x0b\x32\x0b.PbTimeZone\x12\x12\n\ntree_depth\x18\x18 \x01(\x05\x12\x15\n\rjob_log_names\x18\x19 \x03(\t\x12\x15\n\rns_defn_order\x18\x1a \x03(\t\x12\x0e\n\x06states\x18\x1b \x03(\t\x12\x14\n\x0ctask_proxies\x18\x1c \x03(\t\x12\x16\n\x0e\x66\x61mily_proxies\x18\x1d \x03(\t\x12\x12\n\nstatus_msg\x18\x1e \x01(\t\x12\x15\n\ris_held_total\x18\x1f \x01(\x05\x1a\x32\n\x10StateTotalsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x05:\x02\x38\x01\"\x85\x05\n\x05PbJob\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x12\n\nsubmit_num\x18\x03 \x01(\x05\x12\r\n\x05state\x18\x04 \x01(\t\x12\x12\n\ntask_proxy\x18\x05 \x01(\t\x12\x16\n\x0esubmitted_time\x18\x06 \x01(\t\x12\x14\n\x0cstarted_time\x18\x07 \x01(\t\x12\x15\n\rfinished_time\x18\x08 \x01(\t\x12\x18\n\x10\x62\x61tch_sys_job_id\x18\t \x01(\t\x12\x16\n\x0e\x62\x61tch_sys_name\x18\n \x01(\t\x12\x12\n\nenv_script\x18\x0b \x01(\t\x12\x12\n\nerr_script\x18\x0c \x01(\t\x12\x13\n\x0b\x65xit_script\x18\r \x01(\t\x12\x1c\n\x14\x65xecution_time_limit\x18\x0e \x01(\x02\x12\x0c\n\x04host\x18\x0f \x01(\t\x12\x13\n\x0binit_script\x18\x10 \x01(\t\x12\x13\n\x0bjob_log_dir\x18\x11 \x01(\t\x12\r\n\x05owner\x18\x12 \x01(\t\x12\x13\n\x0bpost_script\x18\x13 \x01(\t\x12\x12\n\npre_script\x18\x14 \x01(\t\x12\x0e\n\x06script\x18\x15 \x01(\t\x12\r\n\x05shell\x18\x16 \x01(\t\x12\x14\n\x0cwork_sub_dir\x18\x17 \x01(\t\x12\x16\n\x0e\x62\x61tch_sys_conf\x18\x18 \x03(\t\x12\x13\n\x0b\x65nvironment\x18\x19 \x03(\t\x12\x12\n\ndirectives\x18\x1a \x03(\t\x12\x16\n\x0eparam_env_tmpl\x18\x1b \x03(\t\x12\x11\n\tparam_var\x18\x1c \x03(\t\x12\x12\n\nextra_logs\x18\x1d \x03(\t\x12\x0c\n\x04name\x18\x1e \x01(\t\x12\x13\n\x0b\x63ycle_point\x18\x1f \x01(\t\x12\x10\n\x08messages\x18  \x03(\t\"\x96\x01\n\x06PbTask\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x15\n\x04meta\x18\x04 \x01(\x0b\x32\x07.PbMeta\x12\x19\n\x11mean_elapsed_time\x18\x05 \x01(\x02\x12\r\n\x05\x64\x65pth\x18\x06 \x01(\x05\x12\x0f\n\x07proxies\x18\x07 \x03(\t\x12\x11\n\tnamespace\x18\x08 \x03(\t\"r\n\nPbPollTask\x12\x13\n\x0blocal_proxy\x18\x01 \x01(\t\x12\x10\n\x08workflow\x18\x02 \x01(\t\x12\x14\n\x0cremote_proxy\x18\x03 \x01(\t\x12\x11\n\treq_state\x18\x04 \x01(\t\x12\x14\n\x0cgraph_string\x18\x05 \x01(\t\"l\n\x0bPbCondition\x12\x12\n\ntask_proxy\x18\x01 \x01(\t\x12\x12\n\nexpr_alias\x18\x02 \x01(\t\x12\x11\n\treq_state\x18\x03 \x01(\t\x12\x11\n\tsatisfied\x18\x04 \x01(\x08\x12\x0f\n\x07message\x18\x05 \x01(\t\"o\n\x0ePbPrerequisite\x12\x12\n\nexpression\x18\x01 \x01(\t\x12 \n\nconditions\x18\x02 \x03(\x0b\x32\x0c.PbCondition\x12\x14\n\x0c\x63ycle_points\x18\x03 \x03(\t\x12\x11\n\tsatisfied\x18\x04 \x01(\x08\"\xfd\x02\n\x0bPbTaskProxy\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0c\n\x04task\x18\x03 \x01(\t\x12\r\n\x05state\x18\x04 \x01(\t\x12\x13\n\x0b\x63ycle_point\x18\x05 \x01(\t\x12\x0f\n\x07spawned\x18\x06 \x01(\x08\x12\r\n\x05\x64\x65pth\x18\x07 \x01(\x05\x12\x13\n\x0bjob_submits\x18\x08 \x01(\x05\x12\x16\n\x0elatest_message\x18\t \x01(\t\x12\x0f\n\x07outputs\x18\n \x03(\t\x12\x12\n\nbroadcasts\x18\x0b \x03(\t\x12\x11\n\tnamespace\x18\x0c \x03(\t\x12&\n\rprerequisites\x18\r \x03(\x0b\x32\x0f.PbPrerequisite\x12\x0c\n\x04jobs\x18\x0e \x03(\t\x12\x0f\n\x07parents\x18\x0f \x03(\t\x12\x14\n\x0c\x66irst_parent\x18\x10 \x01(\t\x12\x0c\n\x04name\x18\x11 \x01(\t\x12\x0f\n\x07is_held\x18\x12 \x01(\x08\x12\r\n\x05\x65\x64ges\x18\x13 \x03(\t\x12\x11\n\tancestors\x18\x14 \x03(\t\"\xa8\x01\n\x08PbFamily\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x15\n\x04meta\x18\x04 \x01(\x0b\x32\x07.PbMeta\x12\r\n\x05\x64\x65pth\x18\x05 \x01(\x05\x12\x0f\n\x07proxies\x18\x06 \x03(\t\x12\x0f\n\x07parents\x18\x07 \x03(\t\x12\x13\n\x0b\x63hild_tasks\x18\x08 \x03(\t\x12\x16\n\x0e\x63hild_families\x18\t \x03(\t\"\xf3\x01\n\rPbFamilyProxy\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x13\n\x0b\x63ycle_point\x18\x03 \x01(\t\x12\x0c\n\x04name\x18\x04 \x01(\t\x12\x0e\n\x06\x66\x61mily\x18\x05 \x01(\t\x12\r\n\x05state\x18\x06 \x01(\t\x12\r\n\x05\x64\x65pth\x18\x07 \x01(\x05\x12\x14\n\x0c\x66irst_parent\x18\x08 \x01(\t\x12\x0f\n\x07parents\x18\t \x03(\t\x12\x13\n\x0b\x63hild_tasks\x18\n \x03(\t\x12\x16\n\x0e\x63hild_families\x18\x0b \x03(\t\x12\x0f\n\x07is_held\x18\x0c \x01(\x08\x12\x11\n\tancestors\x18\r \x03(\t\"b\n\x06PbEdge\x12\r\n\x05stamp\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x0e\n\x06source\x18\x03 \x01(\t\x12\x0e\n\x06target\x18\x04 \x01(\t\x12\x0f\n\x07suicide\x18\x05 \x01(\x08\x12\x0c\n\x04\x63ond\x18\x06 \x01(\x08\"o\n\x07PbEdges\x12\n\n\x02id\x18\x01 \x01(\t\x12\r\n\x05\x65\x64ges\x18\x02 \x03(\t\x12+\n\x16workflow_polling_tasks\x18\x03 \x03(\x0b\x32\x0b.PbPollTask\x12\x0e\n\x06leaves\x18\x04 \x03(\t\x12\x0c\n\x04\x66\x65\x65t\x18\x05 \x03(\t\"\xe0\x01\n\x10PbEntireWorkflow\x12\x1d\n\x08workflow\x18\x01 \x01(\x0b\x32\x0b.PbWorkflow\x12\x16\n\x05tasks\x18\x02 \x03(\x0b\x32\x07.PbTask\x12\"\n\x0ctask_proxies\x18\x03 \x03(\x0b\x32\x0c.PbTaskProxy\x12\x14\n\x04jobs\x18\x04 \x03(\x0b\x32\x06.PbJob\x12\x1b\n\x08\x66\x61milies\x18\x05 \x03(\x0b\x32\t.PbFamily\x12&\n\x0e\x66\x61mily_proxies\x18\x06 \x03(\x0b\x32\x0e.PbFamilyProxy\x12\x16\n\x05\x65\x64ges\x18\x07 \x03(\x0b\x32\x07.PbEdge\"}\n\x07\x45\x44\x65ltas\x12\x0c\n\x04time\x18\x01 \x01(\x01\x12\x10\n\x08\x63hecksum\x18\x02 \x01(\x03\x12\x16\n\x05\x61\x64\x64\x65\x64\x18\x03 \x03(\x0b\x32\x07.PbEdge\x12\x18\n\x07updated\x18\x04 \x03(\x0b\x32\x07.PbEdge\x12\x0e\n\x06pruned\x18\x05 \x03(\t\x12\x10\n\x08reloaded\x18\x06 \x01(\x08\"\x81\x01\n\x07\x46\x44\x65ltas\x12\x0c\n\x04time\x18\x01 \x01(\x01\x12\x10\n\x08\x63hecksum\x18\x02 \x01(\x03\x12\x18\n\x05\x61\x64\x64\x65\x64\x18\x03 \x03(\x0b\x32\t.PbFamily\x12\x1a\n\x07updated\x18\x04 \x03(\x0b\x32\t.PbFamily\x12\x0e\n\x06pruned\x18\x05 \x03(\t\x12\x10\n\x08reloaded\x18\x06 \x01(\x08\"\x8c\x01\n\x08\x46PDeltas\x12\x0c\n\x04time\x18\x01 \x01(\x01\x12\x10\n\x08\x63hecksum\x18\x02 \x01(\x03\x12\x1d\n\x05\x61\x64\x64\x65\x64\x18\x03 \x03(\x0b\x32\x0e.PbFamilyProxy\x12\x1f\n\x07updated\x18\x04 \x03(\x0b\x32\x0e.PbFamilyProxy\x12\x0e\n\x06pruned\x18\x05 \x03(\t\x12\x10\n\x08reloaded\x18\x06 \x01(\x08\"{\n\x07JDeltas\x12\x0c\n\x04time\x18\x01 \x01(\x01\x12\x10\n\x08\x63hecksum\x18\x02 \x01(\x03\x12\x15\n\x05\x61\x64\x64\x65\x64\x18\x03 \x03(\x0b\x32\x06.PbJob\x12\x17\n\x07updated\x18\x04 \x03(\x0b\x32\x06.PbJob\x12\x0e\n\x06pruned\x18\x05 \x03(\t\x12\x10\n\x08reloaded\x18\x06 \x01(\x08\"}\n\x07TDeltas\x12\x0c\n\x04time\x18\x01 \x01(\x01\x12\x10\n\x08\x63hecksum\x18\x02 \x01(\x03\x12\x16\n\x05\x61\x64\x64\x65\x64\x18\x03 \x03(\x0b\x32\x07.PbTask\x12\x18\n\x07updated\x18\x04 \x03(\x0b\x32\x07.PbTask\x12\x0e\n\x06pruned\x18\x05 \x03(\t\x12\x10\n\x08reloaded\x18\x06 \x01(\x08\"\x88\x01\n\x08TPDeltas\x12\x0c\n\x04time\x18\x01 \x01(\x01\x12\x10\n\x08\x63hecksum\x18\x02 \x01(\x03\x12\x1b\n\x05\x61\x64\x64\x65\x64\x18\x03 \x03(\x0b\x32\x0c.PbTaskProxy\x12\x1d\n\x07updated\x18\x04 \x03(\x0b\x32\x0c.PbTaskProxy\x12\x0e\n\x06pruned\x18\x05 \x03(\t\x12\x10\n\x08reloaded\x18\x06 \x01(\x08\"c\n\x07WDeltas\x12\x0c\n\x04time\x18\x01 \x01(\x01\x12\x1a\n\x05\x61\x64\x64\x65\x64\x18\x02 \x01(\x0b\x32\x0b.PbWorkflow\x12\x1c\n\x07updated\x18\x03 \x01(\x0b\x32\x0b.PbWorkflow\x12\x10\n\x08reloaded\x18\x04 \x01(\x08\"\xd1\x01\n\tAllDeltas\x12\x1a\n\x08\x66\x61milies\x18\x01 \x01(\x0b\x32\x08.FDeltas\x12!\n\x0e\x66\x61mily_proxies\x18\x02 \x01(\x0b\x32\t.FPDeltas\x12\x16\n\x04jobs\x18\x03 \x01(\x0b\x32\x08.JDeltas\x12\x17\n\x05tasks\x18\x04 \x01(\x0b\x32\x08.TDeltas\x12\x1f\n\x0ctask_proxies\x18\x05 \x01(\x0b\x32\t.TPDeltas\x12\x17\n\x05\x65\x64ges\x18\x06 \x01(\x0b\x32\x08.EDeltas\x12\x1a\n\x08workflow\x18\x07 \x01(\x0b\x32\x08.WDeltasb\x06proto3'
 )
 
 
@@ -1490,22 +1490,29 @@ _EDELTAS = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='pruned', full_name='EDeltas.pruned', index=2,
-      number=3, type=9, cpp_type=9, label=3,
+      name='added', full_name='EDeltas.added', index=2,
+      number=3, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='deltas', full_name='EDeltas.deltas', index=3,
+      name='updated', full_name='EDeltas.updated', index=3,
       number=4, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='reloaded', full_name='EDeltas.reloaded', index=4,
-      number=5, type=8, cpp_type=7, label=1,
+      name='pruned', full_name='EDeltas.pruned', index=4,
+      number=5, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='reloaded', full_name='EDeltas.reloaded', index=5,
+      number=6, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -1523,7 +1530,7 @@ _EDELTAS = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=3328,
-  serialized_end=3428,
+  serialized_end=3453,
 )
 
 
@@ -1549,22 +1556,29 @@ _FDELTAS = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='pruned', full_name='FDeltas.pruned', index=2,
-      number=3, type=9, cpp_type=9, label=3,
+      name='added', full_name='FDeltas.added', index=2,
+      number=3, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='deltas', full_name='FDeltas.deltas', index=3,
+      name='updated', full_name='FDeltas.updated', index=3,
       number=4, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='reloaded', full_name='FDeltas.reloaded', index=4,
-      number=5, type=8, cpp_type=7, label=1,
+      name='pruned', full_name='FDeltas.pruned', index=4,
+      number=5, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='reloaded', full_name='FDeltas.reloaded', index=5,
+      number=6, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -1581,8 +1595,8 @@ _FDELTAS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3430,
-  serialized_end=3532,
+  serialized_start=3456,
+  serialized_end=3585,
 )
 
 
@@ -1608,22 +1622,29 @@ _FPDELTAS = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='pruned', full_name='FPDeltas.pruned', index=2,
-      number=3, type=9, cpp_type=9, label=3,
+      name='added', full_name='FPDeltas.added', index=2,
+      number=3, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='deltas', full_name='FPDeltas.deltas', index=3,
+      name='updated', full_name='FPDeltas.updated', index=3,
       number=4, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='reloaded', full_name='FPDeltas.reloaded', index=4,
-      number=5, type=8, cpp_type=7, label=1,
+      name='pruned', full_name='FPDeltas.pruned', index=4,
+      number=5, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='reloaded', full_name='FPDeltas.reloaded', index=5,
+      number=6, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -1640,8 +1661,8 @@ _FPDELTAS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3534,
-  serialized_end=3642,
+  serialized_start=3588,
+  serialized_end=3728,
 )
 
 
@@ -1667,22 +1688,29 @@ _JDELTAS = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='pruned', full_name='JDeltas.pruned', index=2,
-      number=3, type=9, cpp_type=9, label=3,
+      name='added', full_name='JDeltas.added', index=2,
+      number=3, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='deltas', full_name='JDeltas.deltas', index=3,
+      name='updated', full_name='JDeltas.updated', index=3,
       number=4, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='reloaded', full_name='JDeltas.reloaded', index=4,
-      number=5, type=8, cpp_type=7, label=1,
+      name='pruned', full_name='JDeltas.pruned', index=4,
+      number=5, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='reloaded', full_name='JDeltas.reloaded', index=5,
+      number=6, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -1699,8 +1727,8 @@ _JDELTAS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3644,
-  serialized_end=3743,
+  serialized_start=3730,
+  serialized_end=3853,
 )
 
 
@@ -1726,22 +1754,29 @@ _TDELTAS = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='pruned', full_name='TDeltas.pruned', index=2,
-      number=3, type=9, cpp_type=9, label=3,
+      name='added', full_name='TDeltas.added', index=2,
+      number=3, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='deltas', full_name='TDeltas.deltas', index=3,
+      name='updated', full_name='TDeltas.updated', index=3,
       number=4, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='reloaded', full_name='TDeltas.reloaded', index=4,
-      number=5, type=8, cpp_type=7, label=1,
+      name='pruned', full_name='TDeltas.pruned', index=4,
+      number=5, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='reloaded', full_name='TDeltas.reloaded', index=5,
+      number=6, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -1758,8 +1793,8 @@ _TDELTAS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3745,
-  serialized_end=3845,
+  serialized_start=3855,
+  serialized_end=3980,
 )
 
 
@@ -1785,22 +1820,29 @@ _TPDELTAS = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='pruned', full_name='TPDeltas.pruned', index=2,
-      number=3, type=9, cpp_type=9, label=3,
+      name='added', full_name='TPDeltas.added', index=2,
+      number=3, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='deltas', full_name='TPDeltas.deltas', index=3,
+      name='updated', full_name='TPDeltas.updated', index=3,
       number=4, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='reloaded', full_name='TPDeltas.reloaded', index=4,
-      number=5, type=8, cpp_type=7, label=1,
+      name='pruned', full_name='TPDeltas.pruned', index=4,
+      number=5, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='reloaded', full_name='TPDeltas.reloaded', index=5,
+      number=6, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -1817,8 +1859,60 @@ _TPDELTAS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3847,
-  serialized_end=3953,
+  serialized_start=3983,
+  serialized_end=4119,
+)
+
+
+_WDELTAS = _descriptor.Descriptor(
+  name='WDeltas',
+  full_name='WDeltas',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='time', full_name='WDeltas.time', index=0,
+      number=1, type=1, cpp_type=5, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='added', full_name='WDeltas.added', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='updated', full_name='WDeltas.updated', index=2,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='reloaded', full_name='WDeltas.reloaded', index=3,
+      number=4, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=4121,
+  serialized_end=4220,
 )
 
 
@@ -1830,49 +1924,49 @@ _ALLDELTAS = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='workflow', full_name='AllDeltas.workflow', index=0,
+      name='families', full_name='AllDeltas.families', index=0,
       number=1, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='edges', full_name='AllDeltas.edges', index=1,
+      name='family_proxies', full_name='AllDeltas.family_proxies', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='families', full_name='AllDeltas.families', index=2,
+      name='jobs', full_name='AllDeltas.jobs', index=2,
       number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='family_proxies', full_name='AllDeltas.family_proxies', index=3,
+      name='tasks', full_name='AllDeltas.tasks', index=3,
       number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='jobs', full_name='AllDeltas.jobs', index=4,
+      name='task_proxies', full_name='AllDeltas.task_proxies', index=4,
       number=5, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='tasks', full_name='AllDeltas.tasks', index=5,
+      name='edges', full_name='AllDeltas.edges', index=5,
       number=6, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='task_proxies', full_name='AllDeltas.task_proxies', index=6,
+      name='workflow', full_name='AllDeltas.workflow', index=6,
       number=7, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -1890,8 +1984,8 @@ _ALLDELTAS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3956,
-  serialized_end=4168,
+  serialized_start=4223,
+  serialized_end=4432,
 )
 
 _PBWORKFLOW_STATETOTALSENTRY.containing_type = _PBWORKFLOW
@@ -1911,19 +2005,27 @@ _PBENTIREWORKFLOW.fields_by_name['jobs'].message_type = _PBJOB
 _PBENTIREWORKFLOW.fields_by_name['families'].message_type = _PBFAMILY
 _PBENTIREWORKFLOW.fields_by_name['family_proxies'].message_type = _PBFAMILYPROXY
 _PBENTIREWORKFLOW.fields_by_name['edges'].message_type = _PBEDGE
-_EDELTAS.fields_by_name['deltas'].message_type = _PBEDGE
-_FDELTAS.fields_by_name['deltas'].message_type = _PBFAMILY
-_FPDELTAS.fields_by_name['deltas'].message_type = _PBFAMILYPROXY
-_JDELTAS.fields_by_name['deltas'].message_type = _PBJOB
-_TDELTAS.fields_by_name['deltas'].message_type = _PBTASK
-_TPDELTAS.fields_by_name['deltas'].message_type = _PBTASKPROXY
-_ALLDELTAS.fields_by_name['workflow'].message_type = _PBWORKFLOW
-_ALLDELTAS.fields_by_name['edges'].message_type = _EDELTAS
+_EDELTAS.fields_by_name['added'].message_type = _PBEDGE
+_EDELTAS.fields_by_name['updated'].message_type = _PBEDGE
+_FDELTAS.fields_by_name['added'].message_type = _PBFAMILY
+_FDELTAS.fields_by_name['updated'].message_type = _PBFAMILY
+_FPDELTAS.fields_by_name['added'].message_type = _PBFAMILYPROXY
+_FPDELTAS.fields_by_name['updated'].message_type = _PBFAMILYPROXY
+_JDELTAS.fields_by_name['added'].message_type = _PBJOB
+_JDELTAS.fields_by_name['updated'].message_type = _PBJOB
+_TDELTAS.fields_by_name['added'].message_type = _PBTASK
+_TDELTAS.fields_by_name['updated'].message_type = _PBTASK
+_TPDELTAS.fields_by_name['added'].message_type = _PBTASKPROXY
+_TPDELTAS.fields_by_name['updated'].message_type = _PBTASKPROXY
+_WDELTAS.fields_by_name['added'].message_type = _PBWORKFLOW
+_WDELTAS.fields_by_name['updated'].message_type = _PBWORKFLOW
 _ALLDELTAS.fields_by_name['families'].message_type = _FDELTAS
 _ALLDELTAS.fields_by_name['family_proxies'].message_type = _FPDELTAS
 _ALLDELTAS.fields_by_name['jobs'].message_type = _JDELTAS
 _ALLDELTAS.fields_by_name['tasks'].message_type = _TDELTAS
 _ALLDELTAS.fields_by_name['task_proxies'].message_type = _TPDELTAS
+_ALLDELTAS.fields_by_name['edges'].message_type = _EDELTAS
+_ALLDELTAS.fields_by_name['workflow'].message_type = _WDELTAS
 DESCRIPTOR.message_types_by_name['PbMeta'] = _PBMETA
 DESCRIPTOR.message_types_by_name['PbTimeZone'] = _PBTIMEZONE
 DESCRIPTOR.message_types_by_name['PbWorkflow'] = _PBWORKFLOW
@@ -1944,6 +2046,7 @@ DESCRIPTOR.message_types_by_name['FPDeltas'] = _FPDELTAS
 DESCRIPTOR.message_types_by_name['JDeltas'] = _JDELTAS
 DESCRIPTOR.message_types_by_name['TDeltas'] = _TDELTAS
 DESCRIPTOR.message_types_by_name['TPDeltas'] = _TPDELTAS
+DESCRIPTOR.message_types_by_name['WDeltas'] = _WDELTAS
 DESCRIPTOR.message_types_by_name['AllDeltas'] = _ALLDELTAS
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -2094,6 +2197,13 @@ TPDeltas = _reflection.GeneratedProtocolMessageType('TPDeltas', (_message.Messag
   # @@protoc_insertion_point(class_scope:TPDeltas)
   })
 _sym_db.RegisterMessage(TPDeltas)
+
+WDeltas = _reflection.GeneratedProtocolMessageType('WDeltas', (_message.Message,), {
+  'DESCRIPTOR' : _WDELTAS,
+  '__module__' : 'data_messages_pb2'
+  # @@protoc_insertion_point(class_scope:WDeltas)
+  })
+_sym_db.RegisterMessage(WDeltas)
 
 AllDeltas = _reflection.GeneratedProtocolMessageType('AllDeltas', (_message.Message,), {
   'DESCRIPTOR' : _ALLDELTAS,

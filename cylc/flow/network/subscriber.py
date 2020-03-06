@@ -17,10 +17,8 @@
 
 import json
 import sys
-from time import sleep
 from typing import Iterable, Union
 
-import asyncio
 import zmq
 
 from cylc.flow.network import ZMQSocketBase, get_location
@@ -105,4 +103,3 @@ class WorkflowSubscriber(ZMQSocketBase):
                 data = json.loads(msg)
                 sys.stdout.write(
                     json.dumps(data, indent=4) + '\n')
-        await asyncio.sleep(0)
