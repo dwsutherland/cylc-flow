@@ -104,7 +104,7 @@ async def test_shutdown(flow, scheduler, run, one_conf):
     schd = scheduler(reg)
     async with run(schd):
         pass
-    assert schd.server.socket.closed
+    assert schd.server.replier.socket.closed
 
 
 @pytest.mark.asyncio
@@ -179,7 +179,7 @@ async def test_exception(flow, scheduler, run, one_conf, log_filter):
 
     # make sure the server socket has closed - a good indication of a
     # successful clean shutdown
-    assert schd.server.socket.closed
+    assert schd.server.replier.socket.closed
 
 
 @pytest.fixture(scope='module')

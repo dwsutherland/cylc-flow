@@ -652,14 +652,14 @@ class TaskEventsManager():
         for label, value in [
                 ('workflow', schd_ctx.workflow),
                 ("host", schd_ctx.host),
-                ("port", schd_ctx.port),
+                ("port", schd_ctx.server.port),
                 ("owner", schd_ctx.owner)]:
             if value:
                 stdin_str += "%s: %s\n" % (label, value)
         if self.mail_footer:
             stdin_str += (self.mail_footer + "\n") % {
                 "host": schd_ctx.host,
-                "port": schd_ctx.port,
+                "port": schd_ctx.server.port,
                 "owner": schd_ctx.owner,
                 "workflow": schd_ctx.workflow}
         # SMTP server

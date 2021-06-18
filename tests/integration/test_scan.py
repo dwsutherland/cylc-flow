@@ -284,7 +284,7 @@ async def test_scan_sigstop(flow, scheduler, run, one_conf, test_dir, caplog):
     schd = scheduler(reg)
     async with run(schd):
         # stop the server to make the flow un-responsive
-        schd.server.stop()
+        schd.server.stop('make-unresponsive')
         # try scanning the workflow
         pipe = scan(test_dir) | graphql_query(['status'])
         caplog.clear()

@@ -88,22 +88,6 @@ async def accident(flow, scheduler, run, one_conf):
         yield schd
 
 
-@pytest.mark.asyncio
-async def test_listener(accident):
-    """Test listener."""
-    accident.server.queue.put('STOP')
-    async with timeout(2):
-        # wait for the server to consume the STOP item from the queue
-        while True:
-            if accident.server.queue.empty():
-                break
-            await asyncio.sleep(0.01)
-    # ensure the server is "closed"
-    with pytest.raises(ValueError):
-        accident.server.queue.put('foobar')
-        accident.server._listener()
-
-
 def test_receiver(accident):
     """Test receiver."""
     msg_in = {'not_command': 'foobar', 'args': {}}
