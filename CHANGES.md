@@ -55,6 +55,9 @@ default job runner directives for platforms.
 
 ### Fixes
 
+[#5011](https://github.com/cylc/cylc-flow/pull/5011) - Removes preparing jobs
+appearing in UI, and reuse submit number on restart for preparing tasks.
+
 [#5008](https://github.com/cylc/cylc-flow/pull/5008) -
 Autospawn absolute-triggered tasks exactly the same way as parentless tasks.
 
