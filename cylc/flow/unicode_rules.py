@@ -323,6 +323,7 @@ class XtriggerNameValidator(UnicodeRuleChecker):
     RULES = [
         allowed_characters(r'a-zA-Z0-9', '_'),
         not_starts_with('_cylc'),
+        not_equals('settings'),
     ]
 
 

@@ -186,6 +186,7 @@ class TaskProxy:
         'tokens',
         'try_timers',
         'waiting_on_job_prep',
+        'is_xtrigger_sequential',
     ]
 
     def __init__(
@@ -220,6 +221,7 @@ class TaskProxy:
             task=self.tdef.name,
         )
         self.identity = self.tokens.relative_id
+        self.is_xtrigger_sequential = False
         self.reload_successor: Optional['TaskProxy'] = None
         self.point_as_seconds: Optional[int] = None
 
