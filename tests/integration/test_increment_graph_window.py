@@ -107,7 +107,7 @@ def get_graph_walk_cache(schd):
         Tokens(task_id)['task']
         for task_id in schd.data_store_mgr.n_window_completed_walks
     )
-    # TODO: these two dicts appear to always contain the same things?
+    # the IDs in set and keys of dict are only the same at n<2 window.
     assert n_window_node_walks == n_window_completed_walks
     return n_window_completed_walks
 
