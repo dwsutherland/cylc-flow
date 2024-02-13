@@ -808,6 +808,9 @@ class TaskPool:
 
         if itask.is_xtrigger_sequential:
             self.xtrigger_mgr.sequential_spawn_next.discard(itask.identity)
+            self.xtrigger_mgr.sequential_has_spawned_next.discard(
+                itask.identity
+            )
 
         try:
             del self.hidden_pool[itask.point][itask.identity]
@@ -1722,7 +1725,16 @@ class TaskPool:
         itasks, _, bad_items = self.filter_task_proxies(items)
         for itask in itasks:
             # Spawn next occurrence of xtrigger sequential task.
-            if itask.is_xtrigger_sequential:
+            if (
+                itask.is_xtrigger_sequential
+                and (
+                    itask.identity not in
+                    self.xtrigger_mgr.sequential_has_spawned_next
+                )
+            ):
+                self.xtrigger_mgr.sequential_has_spawned_next.add(
+                    itask.identity
+                )
                 self.spawn_to_rh_limit(
                     itask.tdef,
                     itask.tdef.next_point(itask.point),
@@ -1812,6 +1824,23 @@ class TaskPool:
                     itask.tdef.next_point(itask.point),
                     itask.flow_nums
                 )
+            # Task may be set running before xtrigger is satisfied,
+            # if so check/spawn if xtrigger sequential.
+            elif (
+                itask.is_xtrigger_sequential
+                and (
+                    itask.identity not in
+                    self.xtrigger_mgr.sequential_has_spawned_next
+                )
+            ):
+                self.xtrigger_mgr.sequential_has_spawned_next.add(
+                    itask.identity
+                )
+                self.spawn_to_rh_limit(
+                    itask.tdef,
+                    itask.tdef.next_point(itask.point),
+                    itask.flow_nums
+                )
             else:
                 # De-queue it to run now.
                 self.task_queue_mgr.force_release_task(itask)
@@ -1822,6 +1851,7 @@ class TaskPool:
         """Spawn successor(s) of parentless wall clock satisfied tasks."""
         while self.xtrigger_mgr.sequential_spawn_next:
             taskid = self.xtrigger_mgr.sequential_spawn_next.pop()
+            self.xtrigger_mgr.sequential_has_spawned_next.add(taskid)
             itask = (
                 self._get_hidden_task_by_id(taskid)
                 or self._get_main_task_by_id(taskid)
