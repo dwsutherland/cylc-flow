@@ -884,7 +884,7 @@ class TaskPool:
 
         return point_itasks
 
-    def get_task(self, point, name) -> Optional[TaskProxy]:
+    def get_task(self, point: 'PointBase', name: str) -> Optional[TaskProxy]:
         """Retrieve a task from the pool."""
         rel_id = f'{point}/{name}'
         for pool in (self.main_pool, self.hidden_pool):
@@ -1747,7 +1747,7 @@ class TaskPool:
 
     def force_trigger_tasks(
         self, items: Iterable[str],
-        flow: List[str],
+        flow: List[Union[str, int]],
         flow_wait: bool = False,
         flow_descr: Optional[str] = None
     ) -> int:
