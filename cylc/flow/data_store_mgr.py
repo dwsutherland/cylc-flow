@@ -1920,9 +1920,10 @@ class DataStoreMgr:
 
         """
         fp_data = self.data[self.workflow_id][FAMILY_PROXIES]
+        fp_added = self.added[FAMILY_PROXIES]
         fp_updated = self.updated[FAMILY_PROXIES]
-        if fp_id in fp_data:
-            fam_node = fp_data[fp_id]
+        fam_node = fp_data.get(fp_id, fp_added.get(fp_id, None))
+        if fam_node is not None:
             # Gather child families, then check/update recursively
             for child_id in fam_node.child_families:
                 if child_id in checked_ids:
@@ -1937,11 +1938,14 @@ class DataStoreMgr:
                     child_tasks.update(fp_updated[fp_id].child_tasks)
                 if fp_updated[fp_id].child_families:
                     child_families.update(fp_updated[fp_id].child_families)
-            # if any child tasks or families are in window, don't prune.
+            # If any child tasks or families are in window,
+            # then don't prune this family.
             if (
                 child_tasks.difference(node_ids)
                 or child_families.difference(prune_ids)
             ):
+                # If any child tasks or families will be pruned,
+                # then update family states.
                 if (
                     child_tasks.intersection(node_ids)
                     or child_families.intersection(prune_ids)
