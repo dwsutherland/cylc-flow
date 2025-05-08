@@ -177,6 +177,8 @@ from cylc.flow.workflow_status import (
 )
 from cylc.flow.xtrigger_mgr import XtriggerManager
 
+from pympler import muppy, summary, asizeof
+
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -190,6 +192,7 @@ if TYPE_CHECKING:
     from cylc.flow.network.resolvers import TaskMsg
     from cylc.flow.task_proxy import TaskProxy
 
+MUPPY_INTERVAL = 15
 
 class SchedulerStop(CylcError):
     """Scheduler normal stop."""
@@ -351,6 +354,8 @@ class Scheduler:
         # Map used to track incomplete remote inits for restart
         # {install_target: platform}
         self.incomplete_ri_map: Dict[str, Dict] = {}
+
+        self.muppy_check_time = time()
 
     async def install(self):
         """Get the filesystem in the right state to run the flow.
@@ -1892,6 +1897,74 @@ class Scheduler:
         else:
             duration = self.INTERVAL_MAIN_LOOP - elapsed
         await asyncio.sleep(duration)
+
+        muppy_elapsed = time() - self.muppy_check_time
+        if (muppy_elapsed >= MUPPY_INTERVAL):
+            all_objects = muppy.get_objects()
+            sum1 = summary.summarize(all_objects)
+            summary.print_(sum1)
+            print('------------------')
+            print(f'Schd: {asizeof.asizeof(self) / 1000} KB')
+            sizer = asizeof.Asizer()
+            sizer.set(detail=2)
+            sizer.exclude_refs(
+                self.data_store_mgr.schd,
+                self.pool.data_store_mgr,
+                self.pool.config,
+                self.pool.workflow_db_mgr,
+                self.pool.task_events_mgr,
+                self.pool.xtrigger_mgr,
+                self.pool.flow_mgr,
+                self.broadcast_mgr.schd,
+                self.broadcast_mgr.workflow_db_mgr,
+                self.broadcast_mgr.data_store_mgr,
+                self.task_events_mgr.data_store_mgr,
+                self.task_events_mgr.workflow_db_mgr,
+                self.task_events_mgr.broadcast_mgr,
+                self.task_events_mgr.xtrigger_mgr,
+                self.task_job_mgr.proc_pool,
+                self.task_job_mgr.workflow_db_mgr,
+                self.task_job_mgr.task_events_mgr,
+                self.task_job_mgr.data_store_mgr,
+                self.task_job_mgr.task_remote_mgr.server,
+                self.task_job_mgr.task_remote_mgr.db_mgr,
+                self.xtrigger_mgr.proc_pool,
+                self.xtrigger_mgr.workflow_db_mgr,
+                self.xtrigger_mgr.broadcast_mgr,
+                self.xtrigger_mgr.data_store_mgr,
+                self.flow_mgr.db_mgr,
+                self.server.schd,
+            )
+            print(f'config: {sizer.asizeof(self.config) / 1000} KB')
+            print(f'Task Pool: {sizer.asizeof(self.pool) / 1000} KB')
+            print(f'Proc Pool: {sizer.asizeof(self.proc_pool) / 1000} KB')
+            print(f'Workflow DB Mgr: {sizer.asizeof(self.workflow_db_mgr) / 1000} KB')
+            print(f'Broadcast Mgr: {sizer.asizeof(self.broadcast_mgr) / 1000} KB')
+            print(f'Task Events Mgr: {sizer.asizeof(self.task_events_mgr) / 1000} KB')
+            print(f'Task Job Mgr: {sizer.asizeof(self.task_job_mgr) / 1000} KB')
+            print(f'Xtrigger Mgr: {sizer.asizeof(self.xtrigger_mgr) / 1000} KB')
+            print(f'Flow Mgr: {sizer.asizeof(self.flow_mgr) / 1000} KB')
+            print(f'Data Store Mgr: {sizer.asizeof(self.data_store_mgr) / 1000} KB')
+            print(f'Server: {sizer.asizeof(self.server) / 1000} KB')
+            check_names = [
+                'data',
+                'deltas',
+                'added',
+                'updated',
+                'delta_queues',
+                'xtrigger_tasks',
+                'n_window_nodes',
+                'n_window_node_walks',
+                'n_window_depths',
+                'db_load_task_proxies',
+                'prune_trigger_nodes',
+            ]
+            for obj_name in check_names:
+                obj = getattr(self.data_store_mgr, obj_name)
+                print(f'{obj_name} - size: {asizeof.asizeof(obj, detail=2)}  length: {len(obj)}')
+            print('------------------')
+            self.muppy_check_time = time()
+
         # Record latest main loop interval
         self.main_loop_intervals.append(time() - tinit)
         # END MAIN LOOP

@@ -79,6 +79,7 @@ from cylc.flow.exceptions import (
     CylcConfigError,
 )
 import cylc.flow.flags
+from cylc.flow.data_store_mgr import DataStoreMgr
 from cylc.flow.flow_mgr import get_flow_nums_set
 from cylc.flow.log_level import log_level_to_verbosity
 from cylc.flow.network.schema import WorkflowStopMode
@@ -412,7 +413,13 @@ async def reload_workflow(schd: 'Scheduler'):
         schd._update_workflow_state()
 
         # Re-initialise data model on reload
+        del schd.data_store_mgr
+        schd.data_store_mgr = DataStoreMgr(schd)
         schd.data_store_mgr.initiate_data_model(schd.is_reloaded)
+        schd.xtrigger_mgr.data_store_mgr = schd.data_store_mgr
+        schd.task_job_mgr.data_store_mgr = schd.data_store_mgr
+        schd.task_events_mgr.data_store_mgr = schd.data_store_mgr
+        schd.pool.data_store_mgr = schd.data_store_mgr
 
         # Reset the remote init map to trigger fresh file installation
         schd.task_job_mgr.task_remote_mgr.remote_init_map.clear()
