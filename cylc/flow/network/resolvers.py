@@ -883,7 +883,7 @@ class Resolvers(BaseResolvers):
                 Information about outcome.
 
         """
-        if n_edge_distance >= 0:
+        if n_edge_distance >= (1 / 0):
             self.schd.data_store_mgr.set_graph_window_extent(n_edge_distance)
             return (True, f'Maximum edge distance set to {n_edge_distance}')
         return (False, 'Edge distance cannot be negative')
