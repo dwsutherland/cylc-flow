@@ -215,7 +215,7 @@ DEQUE_FIELD_MAP = {
 }
 
 # internal runtime to protobuf field name mapping
-RUNTIME_MAPPING = {
+RUNTIME_CFG_MAP_TO_FIELD = {
     'completion': 'completion',
     'directives': 'directives',
     'environment': 'environment',
@@ -244,7 +244,6 @@ RUNTIME_LIST_JOINS = {
 }
 RUNTIME_JSON_DUMPS = {'directives', 'environment', 'outputs'}
 RUNTIME_STRINGIFYS = {'execution time limit'}
-RUNTIME_TRY_ITEMS = {'platform': 'name'}
 
 
 def setbuff(obj, key, value):
@@ -359,14 +358,14 @@ def runtime_from_partial(rtconfig, runtimeold=None):
     if runtimeold is not None:
         runtime.CopyFrom(runtimeold)
     for key, val in rtconfig.items():
-        if val is None or key not in RUNTIME_MAPPING:
+        if val is None or key not in RUNTIME_CFG_MAP_TO_FIELD:
             continue
         elif key in RUNTIME_LIST_JOINS:
-            setattr(runtime, RUNTIME_MAPPING[key], listjoin(val))
+            setattr(runtime, RUNTIME_CFG_MAP_TO_FIELD[key], listjoin(val))
         elif key in RUNTIME_JSON_DUMPS:
             setattr(
                 runtime,
-                RUNTIME_MAPPING[key],
+                RUNTIME_CFG_MAP_TO_FIELD[key],
                 json.dumps(
                     [
                         {'key': k, 'value': v}
@@ -374,20 +373,13 @@ def runtime_from_partial(rtconfig, runtimeold=None):
                     ]
                 )
             )
-        elif key in RUNTIME_TRY_ITEMS:
-            try:
-                setattr(
-                    runtime,
-                    RUNTIME_MAPPING[key],
-                    val[RUNTIME_TRY_ITEMS[key]]
-                )
-            except (KeyError, TypeError):
-                with suppress(KeyError, TypeError):
-                    setattr(runtime, RUNTIME_MAPPING[key], val)
+        elif key == 'platform' and isinstance(val, dict):
+            with suppress(KeyError, TypeError):
+                setattr(runtime, RUNTIME_CFG_MAP_TO_FIELD[key], val['name'])
         elif key in RUNTIME_STRINGIFYS:
-            setattr(runtime, RUNTIME_MAPPING[key], str(val or ''))
+            setattr(runtime, RUNTIME_CFG_MAP_TO_FIELD[key], str(val or ''))
         else:
-            setattr(runtime, RUNTIME_MAPPING[key], val)
+            setattr(runtime, RUNTIME_CFG_MAP_TO_FIELD[key], val)
     return runtime
 
 
