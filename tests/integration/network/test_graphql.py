@@ -489,3 +489,100 @@ async def test_subscription_deltas(one, start):
         }
         with suppress(GeneratorExit):
             await subscription.aclose()
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_subscription_options(one, start):
+    """Test the full subscription with selection field args."""
+    async with start(one):
+        document, kwargs = gather_subscription_args(
+            one,
+            '''
+                subscription {
+                    deltas (stripNull: true) {
+                        id
+                        added {
+                            workflow (deltaStore: true, deltaType: "added") {
+                                id
+                                host
+                                status
+                                tasks {
+                                    name
+                                }
+                            }
+                            taskProxies (
+                                deltaStore: false,
+                                states: ["waiting"]
+                            ) {
+                                name
+                                state
+                                firstParent {
+                                    name
+                                }
+                            }
+                        }
+                        updated {
+                            workflow {
+                                id
+                                host
+                                status
+                            }
+                            taskProxies {
+                                name
+                                state
+                                firstParent {
+                                    name
+                                }
+                            }
+                        }
+                    }
+                }
+            ''',
+        )
+        subscription = await subscribe(
+            schema.graphql_schema,
+            document,
+            **kwargs
+        )
+        aitem = await subscription.__anext__()
+        assert aitem.data['deltas']['added'] == {
+            'workflow': {
+                'id': one.id,
+                'host': one.host,
+                'status': 'paused',
+                'tasks': [{'name': 'one'}]
+            },
+        }
+        # Workflow one is paused on start
+        await one.update_data_structure()
+        assert (
+            one.data_store_mgr.data[one.id]['workflow'].status
+            == get_workflow_status(one).value
+        )
+        # Get the all delta, process, then add it to the subscription queue.
+        btopic, delta, _ = one.data_store_mgr.publish_deltas[-1]
+        _, sub_queue = next(
+            iter(one.data_store_mgr.delta_queues[one.id].items())
+        )
+        sub_queue.put(
+            (
+                one.id,
+                btopic.decode('utf-8'),
+                create_delta_store(delta, one.id)
+            )
+        )
+        aitem = await subscription.__anext__()
+        assert aitem.data['deltas']['added'] == {
+            'taskProxies': [
+                {
+                    'name': 'one',
+                    'state': 'waiting',
+                    'firstParent': {'name': 'root'}
+                }
+            ]
+        }
+        assert aitem.data['deltas']['updated']['workflow'] == {
+            'id': one.id,
+        }
+        with suppress(GeneratorExit):
+            await subscription.aclose()
